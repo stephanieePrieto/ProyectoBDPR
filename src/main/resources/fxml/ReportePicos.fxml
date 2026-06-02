@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="768.0" prefWidth="1024.0" style="-fx-background-color: linear-gradient(to bottom right, #00BFFF, #0055A4);" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.restaurante.controller.ReportePicosController">
+   <children>
+      <Pane layoutX="57.0" layoutY="73.0" prefHeight="622.0" prefWidth="911.0" style="-fx-background-color: ffffff; -fx-background-radius: 25; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 15, 0, 0, 8); -fx-opacity: .9;">
+         <children>
+            <Label layoutX="50.0" layoutY="30.0" text="Reporte de Picos de Actividad" textFill="#0055a4">
+               <font><Font name="System Bold" size="24.0" /></font>
+            </Label>
+            <DatePicker fx:id="dpInicio" layoutX="50.0" layoutY="80.0" promptText="Fecha Inicio" />
+            <DatePicker fx:id="dpFin" layoutX="250.0" layoutY="80.0" promptText="Fecha Fin" />
+            <Button layoutX="450.0" layoutY="80.0" mnemonicParsing="false" onAction="#clicGenerarReporte" prefHeight="25.0" prefWidth="160.0" style="-fx-background-color: #00BFFF; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5;" text="ANALIZAR AFLUENCIA" />
+            
+            <HBox alignment="CENTER_LEFT" layoutX="50.0" layoutY="130.0" prefHeight="75.0" prefWidth="811.0" spacing="50.0" style="-fx-background-color: #FFB300; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 5, 0, 0, 3);">
+               <padding>
+                  <Insets left="30.0" right="30.0" />
+               </padding>
+               <children>
+                  <VBox alignment="CENTER_LEFT" prefHeight="200.0" prefWidth="200.0">
+                     <children>
+                        <Label text="DÍA MÁS OCUPADO:" textFill="WHITE">
+                           <font><Font name="System Bold" size="14.0" /></font>
+                        </Label>
+                        <Label fx:id="lblDiaMayorAfluencia" text="-" textFill="WHITE">
+                           <font><Font name="System Bold" size="24.0" /></font>
+                        </Label>
+                     </children>
+                  </VBox>
+                  <VBox alignment="CENTER_LEFT" prefHeight="200.0" prefWidth="200.0">
+                     <children>
+                        <Label text="PEDIDOS ATENDIDOS:" textFill="WHITE">
+                           <font><Font name="System Bold" size="14.0" /></font>
+                        </Label>
+                        <Label fx:id="lblPedidosMayorAfluencia" text="0 Mesas" textFill="WHITE">
+                           <font><Font name="System Bold" size="24.0" /></font>
+                        </Label>
+                     </children>
+                  </VBox>
+                  <VBox alignment="CENTER_LEFT" prefHeight="200.0" prefWidth="200.0">
+                     <children>
+                        <Label text="INGRESOS ESE DÍA:" textFill="WHITE">
+                           <font><Font name="System Bold" size="14.0" /></font>
+                        </Label>
+                        <Label fx:id="lblIngresosMayorAfluencia" text="\$0.00" textFill="WHITE">
+                           <font><Font name="System Bold" size="24.0" /></font>
+                        </Label>
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+
+            <Label layoutX="50.0" layoutY="220.0" text="Historial ordenado de mayor a menor afluencia:" textFill="#546e7a">
+               <font><Font name="System Italic" size="13.0" /></font>
+            </Label>
+            <TableView fx:id="tblPicos" layoutX="50.0" layoutY="245.0" prefHeight="290.0" prefWidth="811.0" style="-fx-border-color: #00BFFF; -fx-border-radius: 5;">
+              <columns>
+                <TableColumn fx:id="colFecha" prefWidth="250.0" text="Fecha del Día" />
+                <TableColumn fx:id="colPedidos" prefWidth="250.0" text="Mesas Atendidas" />
+                <TableColumn fx:id="colIngresos" prefWidth="300.0" text="Ingresos Brutos ($)" />
+              </columns>
+            </TableView>
+
+            <Button layoutX="50.0" layoutY="555.0" mnemonicParsing="false" onAction="#clicVolver" prefHeight="40.0" prefWidth="120.0" style="-fx-background-color: #A0D3F2; -fx-text-fill: gray; -fx-font-weight: bold; -fx-background-radius: 10;" text="VOLVER" />
+         </children>
+      </Pane>
+   </children>
+</AnchorPane>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="700.0" prefWidth="1024.0" style="-fx-background-color: #8BD3F7;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.restaurante.controller.EstadoMesaController">
+   <children>
+
+      <ImageView fitHeight="700.0" fitWidth="1024.0" pickOnBounds="true">
+         <image>
+            <Image url="@../img/fondoCa.jpeg" />
+         </image>
+      </ImageView>
+
+      <Button fx:id="btnVolver" layoutX="35.0" layoutY="35.0" mnemonicParsing="false" onAction="#volverDashboard" prefHeight="70.0" prefWidth="85.0" style="-fx-background-color: transparent; -fx-cursor: hand;">
+         <graphic>
+            <ImageView fitHeight="65.0" fitWidth="75.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/flechs.png" />
+               </image>
+            </ImageView>
+         </graphic>
+      </Button>
+
+      <ImageView fitHeight="165.0" fitWidth="387.0" layoutX="310.0" layoutY="20.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@../img/estado%20de%20las%20mesas.png" />
+         </image>
+      </ImageView>
+
+      <Pane layoutX="55.0" layoutY="180.0" prefHeight="370.0" prefWidth="915.0" style="-fx-background-color: rgba(245,252,255,0.94); -fx-background-radius: 26; -fx-border-color: #1D8BD3; -fx-border-width: 4; -fx-border-radius: 26; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.28), 12, 0, 0, 4);">
+         <children>
+
+            <TableView fx:id="tvMesas" layoutX="25.0" layoutY="25.0" prefHeight="320.0" prefWidth="865.0" style="-fx-background-color: white; -fx-background-radius: 16; -fx-border-color: #1686CE; -fx-border-radius: 16; -fx-border-width: 2; -fx-control-inner-background: #EAF7FF; -fx-table-cell-border-color: #8CCCF0; -fx-selection-bar: #0078D7; -fx-selection-bar-non-focused: #6AB9EA; -fx-base: #0078D7;">
+               <columns>
+                  <TableColumn fx:id="colNumero" prefWidth="145.0" style="-fx-alignment: CENTER;" text="No. Mesa" />
+                  <TableColumn fx:id="colEstado" prefWidth="220.0" style="-fx-alignment: CENTER;" text="Estado" />
+                  <TableColumn fx:id="colDetalles" prefWidth="500.0" style="-fx-alignment: CENTER;" text="Detalles" />
+               </columns>
+            </TableView>
+
+         </children>
+      </Pane>
+
+      <Pane layoutX="55.0" layoutY="570.0" prefHeight="95.0" prefWidth="620.0" style="-fx-background-color: rgba(8,54,107,0.95); -fx-background-radius: 24; -fx-border-color: #68C7FF; -fx-border-width: 3; -fx-border-radius: 24; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.30), 10, 0, 0, 4);">
+         <children>
+            <ImageView fitHeight="85.0" fitWidth="120.0" layoutX="14.0" layoutY="10.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/mesa.jpg" />
+               </image>
+            </ImageView>
+
+            <Label layoutX="140.0" layoutY="18.0" text="Mesa Seleccionada:" textFill="WHITE">
+               <font>
+                  <Font name="System Bold" size="25.0" />
+               </font>
+            </Label>
+
+            <Label fx:id="lblMesaSeleccionada" layoutX="385.0" layoutY="18.0" text="[ Ninguna ]" textFill="WHITE">
+               <font>
+                  <Font name="System Bold" size="25.0" />
+               </font>
+            </Label>
+
+            <Label layoutX="142.0" layoutY="58.0" text="Selecciona una fila para ver o liberar la mesa." textFill="#BDEFFF">
+               <font>
+                  <Font name="System Bold" size="13.0" />
+               </font>
+            </Label>
+         </children>
+      </Pane>
+
+      <Button fx:id="btnLiberar" layoutX="710.0" layoutY="585.0" mnemonicParsing="false" onAction="#btnLiberarMesaAction" prefHeight="70.0" prefWidth="270.0" style="-fx-background-color: linear-gradient(to bottom, #78E000, #42B800); -fx-background-radius: 22; -fx-border-color: #1D7100; -fx-border-radius: 22; -fx-border-width: 4; -fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.45), 8, 0, 0, 4);" text="Liberar mesa " />
+      <ImageView fitHeight="63.0" fitWidth="250.0" layoutX="725.0" layoutY="585.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@../img/brocha.png" />
+         </image>
+      </ImageView>
+
+   </children>
+</AnchorPane>

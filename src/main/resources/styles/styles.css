@@ -1,0 +1,445 @@
+.logoPane{
+    -fx-background-color: #393646;
+}
+.text-field.inputField {
+    -fx-background-color: #393646;
+    -fx-border-color: #6D5D6E;
+    -fx-border-width: 0 0 2 0;
+    -fx-text-fill: #f4eee0;
+    -fx-border-insets: 5, 0 0 0 0;
+}
+.text-field.inputField:focused{
+    -fx-border-color: #f4eee0;
+}
+.button{
+    -fx-border-width: 4;
+    -fx-border-color: #6D5D6E;
+    -fx-border-radius: 10;
+    -fx-background-insets: 3, 3 3 3 3;
+    -fx-text-fill: #6D5D6E;
+    -fx-font-weight: bold;
+}
+.button:pressed{
+    -fx-scale-X: 0.95;
+    -fx-scale-Y: 0.95;
+}
+.button.closeButton{
+    -fx-background-color: #393646;
+    -fx-border-width: 0;
+    -fx-background-insets: 0, 0 0 0 0;
+    -fx-text-fill: #f4eee0;
+    -fx-font-weight: bold;
+}
+.button.loginButton, .button.exitButton, .button.eraseButton, .button.reportButton, .button.ordersButton{
+    -fx-background-color: #F4EEE0;
+}
+.button.loginButton:hover, .button.exitButton:hover, .button.newPassword:hover, .button.eraseButton:hover, .button.reportButton:hover, .button.ordersButton:hover{
+    -fx-background-color: #6D5D6E!important;
+    -fx-text-fill: #f4eee0;
+}
+.button.applyValueButton:hover{
+    -fx-background-color: #6D5D6E;
+    -fx-text-fill: #393646;
+}
+.tab-pane {
+    -fx-tab-min-height:3em;
+    -fx-tab-max-height:3em;
+    -fx-background-color: #6D5D6E;
+}
+
+.tab .tab-label{
+    -fx-background-color: transparent;
+    -fx-alignment: center;
+    -fx-text-fill: #252525;
+    -fx-font-weight: bold;
+}
+.tab{
+    -fx-background-color: #4F4557;
+    -fx-background-insets: 0.0;
+    -fx-background-radius: 0.0;
+    -fx-border-width: 0 0 0 0;
+}
+
+.tab:selected{
+    -fx-background-color: transparent;
+    -fx-background-insets: 0.0;
+    -fx-background-radius: 0.0;
+    -fx-border-color: #393646;
+    -fx-background-color: #393646;
+
+}
+.tab:selected .tab-label{
+    -fx-text-fill: #f4eee0;
+}
+
+.tab-pane:focused {
+    -fx-focus-color:transparent;
+    -fx-faint-focus-color:transparent;
+}
+.tab-pane *.tab-header-background{
+    -fx-background-color: #4F4557;
+}
+.tab-pane *.tab-header-area{
+    -fx-background-insets: 0 0 0 10;
+    -fx-padding: 0em 0em 0em 8em;
+}
+.table-view .scroll-bar:horizontal {
+    -fx-min-width: 0;
+    -fx-pref-width: 0;
+    -fx-max-width: 0;
+
+    -fx-min-height: 0;
+    -fx-pref-height: 0;
+    -fx-max-height: 0;
+}
+.table-view {
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+}
+.table-view .column-header-background .filler {
+    -fx-background-color: transparent;
+}
+.table-view .column-header-background{
+    -fx-background-color: linear-gradient(to bottom, #1dbbdd44, #93f9b944);
+    -fx-background-radius: 7px 7px 0px 0px;
+    -fx-background-insets: 0 11px 0 0;
+    -fx-padding: 0 0 5px 0;
+}
+.table-view .column-header {
+    -fx-background-color: transparent;
+}
+.table-view .table-cell{
+    -fx-text-fill: #f4eee0;
+    -fx-border-color: transparent;
+    -fx-padding: 2 0 2 10px;
+    -fx-alignment: center;
+}
+.pending-orders-table-view .table-cell {
+    -fx-text-fill: black!important;
+    -fx-alignment: top-center;
+}
+.table-row-cell:hover {
+    -fx-font-weight: bold;
+
+}
+.table-row-cell:odd{
+    -fx-background-color: #93f9b911;
+    -fx-background-insets: 0, 0 0 1 0;
+    -fx-padding: 0.0em;
+}
+.table-row-cell:even{
+    -fx-background-color: #1dbbdd11;
+    -fx-background-insets: 0, 0 0 1 0;
+    -fx-padding: 0.0em;
+}
+.table-view .virtual-flow .scroll-bar:vertical,
+.table-view .virtual-flow .scroll-bar:vertical .track,
+.table-view .virtual-flow .scroll-bar:vertical .track-background{
+    -fx-background-color: transparent;
+}
+.table-view .virtual-flow .scroll-bar .increment-button,
+.table-view .virtual-flow .scroll-bar .decrement-button {
+    -fx-opacity: 0;
+    -fx-padding: 2;
+}
+.table-view .virtual-flow .scroll-bar:vertical .thumb{
+    -fx-background-color:  linear-gradient(to bottom, #1dbbdd44, #93f9b944);
+}
+.my-context-menu {
+    -fx-background-color: #6D5D6E;
+    -fx-background-insets: 5;
+    -fx-padding: 0;
+    -fx-border-width: 5;
+    -fx-border-color: #393646;
+    -fx-border-radius: 10;
+}
+
+.my-context-menu-item:hover {
+    -fx-background-color: #393646;
+}
+.slider .track{
+    -fx-background-color: linear-gradient(to left, cyan, magenta);
+}
+.slider .thumb{
+    -fx-pref-height:20px;
+    -fx-pref-width:5px;
+    -fx-background-color: linear-gradient(to top, royalblue, aquamarine);
+}
+.label.passwordLabel{
+    -fx-text-fill: #f4eee0;
+}
+.contentBox{
+    -fx-effect: dropshadow(three-pass-box, rgba(21, 21, 21, 0.8),10, 0.2,0,0);
+    -fx-background-color: #393646;
+    -fx-border-width:6;
+    -fx-border-color:#393646;
+    -fx-border-radius:10;
+    -fx-background-insets: 5, 0 1 1 0;
+    -fx-padding: 5px 20px 10px 20px;
+    -fx-spacing: 3px;
+}
+.contentBoxReports{
+    -fx-spacing: 60px;
+}
+.contentBoxCreateOrder{
+    -fx-padding: 0px;
+}
+.settingsRadioButton{
+    -fx-text-fill: #f4eee0;
+    -fx-focus-color: transparent;
+     -fx-faint-focus-color: transparent
+}
+.settingsRadioButton .radio{
+    -fx-background-color:  #6D5D6E;
+}
+settingsRadioButton:selected .radio > .dot {
+    -fx-background-color: #393646;
+}
+.choice-box{
+    -fx-background-color: #4F4557;
+    -fx-mark-color: #393646;;
+}
+
+.choice-box > .label {
+    -fx-text-fill: #f4eee0;
+}
+.choice-box .context-menu {
+    -fx-background-color: #4F4557;
+    -fx-border-width:1;
+    -fx-border-color: black;
+    -fx-padding:0;
+}
+.choice-box .menu-item:focused {
+    -fx-background-color: #393646;
+}
+.choice-box .menu-item > .label {
+    -fx-text-fill: #f4eee0;
+}
+.date-picker .arrow-button {
+  -fx-background-color: #6D5D6E;
+  -fx-background-radius: 0;
+}
+.date-picker {
+    -fx-background-color:  #393646;
+}
+.date-picker .text-field {
+    -fx-background-color: #a595a6;
+    -fx-text-fill: #f4eee0;
+    -fx-font-weight: bold;
+}
+.date-picker .arrow-button:hover {
+  -fx-background-color: #864500;
+}
+
+.date-picker .arrow-button .arrow {
+  -fx-background-color: white;
+}
+
+.date-picker .cell {
+  -fx-background-color: white;
+}
+
+.date-picker .cell:hover {
+  -fx-background-color: #6D5D6E;
+}
+
+.date-picker .cell:focused {
+  -fx-background-color: #6D5D6E;
+}
+.date-picker .selected {
+  -fx-background-color: #6D5D6E;
+  -fx-text-fill: white;
+}
+
+.date-picker .selected:focused {
+  -fx-background-color: #6D5D6E;
+  -fx-text-fill: white;
+}
+
+.date-picker-popup {
+  -fx-border-color: transparent;
+}
+
+.date-picker-popup .month-year-pane {
+  -fx-background-color: #6D5D6E;
+}
+
+.date-picker-popup .month-year-pane .label {
+  -fx-text-fill: white;
+}
+
+.date-picker-popup .week-number-cell {
+  -fx-text-fill: #864500;
+}
+.date-picker-popup .spinner .button .left-arrow,
+.date-picker-popup .spinner .button .right-arrow {
+  -fx-background-color: #c2d70e;
+}
+.searchField{
+    -fx-faint-focus-color: transparent;
+    -fx-focus-color: transparent;
+    -fx-background-color: #a595a6;
+    -fx-text-fill: #f4eee0;
+    -fx-font-weight: bold;
+}
+.text-field{
+    -fx-faint-focus-color: transparent;
+    -fx-focus-color: transparent;
+    -fx-text-fill: #f4eee0;
+    -fx-background-color: #4F4557;
+}
+.combo-box .text-field{
+    -fx-background-color:#4F4557;
+    -fx-text-fill: #f4eee0;
+}
+.combo-box{
+    -fx-background-color:transparent;
+    -fx-faint-focus-color: transparent;
+    -fx-focus-color: transparent;
+}
+.combo-box .arrow{
+    -fx-background-color:#393646;
+}
+.combo-box .arrow-button{
+    -fx-background-color:#4F4557;
+    -fx-border-width:0;
+}
+.combo-box .arrow-button{
+    -fx-background-color:#4F4557;
+}
+.combo-box .list-cell:hover{
+    -fx-background-color:#4F4557;
+}
+
+/* 1. Estilo normal del botón (como ya lo tienes) */
+.boton-pinguino {
+    -fx-background-color: #fff9e3; /* Crema claro */
+    -fx-background-radius: 25;
+    -fx-border-color: #555555;     /* Borde oscuro fino normal */
+    -fx-border-radius: 25;
+    -fx-border-width: 2;
+    -fx-font-family: "Arial Rounded MT Bold", "Arial", sans-serif;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+    -fx-cursor: hand;
+    -fx-text-alignment: center;
+    
+    /* Pequeña transición para que el cambio de color no sea brusco */
+    -fx-transition: all 0.2s ease-in-out; 
+}
+
+/* 2. Efecto Hover (cuando pasas el mouse) - Lo mantenemos sutil */
+.boton-pinguino:hover {
+    -fx-background-color: #fdf2c5; 
+}
+
+/* 3. EL EFECTO DE LA IMAGEN (Cuando está seleccionado/enfocado) */
+.boton-pinguino:focused {
+    /* Fondo se vuelve blanco o crema muy claro */
+    -fx-background-color: #fdf2c5; 
+    
+    /* El borde se vuelve VERDE y GRUESO como en la imagen */
+    -fx-border-color: #4CAF50; /* Un verde vibrante tipo Club Penguin */
+    -fx-border-width: 5;       /* Aumentamos el grosor considerablemente */
+    
+    /* Importante: el radio del borde debe seguir al del fondo */
+    -fx-border-radius: 25;
+    -fx-background-radius: 25;
+    
+    /* Opcional: Un pequeño brillo verde para que resalte más */
+    -fx-effect: dropshadow(three-pass-box, rgba(76, 175, 80, 0.5), 10, 0, 0, 0);
+}  
+    #columnaEstado {
+    -fx-background-color: #b3e5fc; /* Azul hielo claro */
+    } 
+    .boton-categoria {
+    -fx-background-color: white;
+    -fx-border-color: #0099CC;
+    -fx-border-width: 3;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-text-fill: #003366;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-alignment: center;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 2, 0, 0, 4);
+}
+.boton-especiales {
+    -fx-background-color: #FFD700; /* Amarillo */
+    -fx-border-color: #B8860B;
+    -fx-border-width: 3;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-text-fill: #003366;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-alignment: center;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 2, 0, 0, 4);
+}
+.boton-mas{
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+}
+
+.contenedores-menu{
+-fx-background-color: white;
+-fx-background-radius: 10;
+-fx-border-color: #A0D8EF;
+-fx-border-width: 2;
+-fx-border-radius: 10;
+
+}
+
+.texto-pizza {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold; /* ¡Esto hace la magia! */
+    -fx-text-fill: #333333; /* Un gris muy oscuro para que resalte */
+}
+
+/* 1. Estado normal del botón */
+.boton-enviar-chef {
+    -fx-background-color: #65C100; /* Un verde brillante y llamativo */
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 15; /* Bordes bien redondeados */
+    -fx-border-color: #386600; /* Borde verde muy oscuro para el estilo cómic */
+    -fx-border-width: 3;
+    -fx-border-radius: 15;
+    -fx-cursor: hand;
+    /* La sombra dura hacia abajo que le da el aspecto 3D */
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 2, 0, 0, 5); 
+    -fx-translate-y: 0;
+    -fx-transition: -fx-background-color 0.2s, -fx-scale-x 0.2s, -fx-scale-y 0.2s;
+    -fx-alignment: center;
+}
+
+/* 2. Estado Hover: Cuando el mesero pasa el mouse por encima */
+.boton-enviar-chef:hover {
+    -fx-background-color: #78E000; /* Se ilumina un poco para indicar que es interactivo */
+    -fx-scale-x: 1.02; /* Crece ligerísimamente */
+    -fx-scale-y: 1.02;
+}
+
+/* 3. Estado Pressed: Cuando el mesero hace clic */
+.boton-enviar-chef:pressed {
+    -fx-background-color: #539E00; /* Se oscurece un poco simulando presión */
+    -fx-translate-y: 5; /* ...y el botón baja 5 píxeles, ¡como si se hundiera de verdad! */
+}
+
+.table-view .column-header {
+    -fx-background-color: #005EA8;
+    -fx-border-color: #003B6F;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.table-row-cell {
+    -fx-cell-size: 55px;
+}

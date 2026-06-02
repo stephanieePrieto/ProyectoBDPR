@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="768.0" prefWidth="1024.0" style="-fx-background-color: linear-gradient(to bottom, #7EDCFF, #1E88D9);" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.restaurante.controller.RegistrarPagoController">
+   <children>
+      <ImageView fitHeight="768.0" fitWidth="1024.0" pickOnBounds="true">
+         <image>
+            <Image url="@../img/fondoCa_1.jpeg" />
+         </image>
+      </ImageView>
+      <Button fx:id="btnVolver" layoutX="825.0" layoutY="42.0" mnemonicParsing="false" onAction="#volverDashboard" prefHeight="52.0" prefWidth="145.0" style="-fx-background-color: linear-gradient(to bottom, #E9FAFF, #74D3FF);                      -fx-background-radius: 20;                      -fx-border-color: #1A74B8;                      -fx-border-width: 3;                      -fx-border-radius: 20;                      -fx-text-fill: #005A95;                      -fx-font-size: 19px;                      -fx-font-weight: bold;                      -fx-cursor: hand;                      -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 8, 0, 0, 4);" text="Volver">
+         <graphic>
+            <ImageView fitHeight="27.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/flechs.png" />
+               </image>
+            </ImageView>
+         </graphic>
+      </Button>
+      <Pane layoutX="120.0" layoutY="148.0" prefHeight="496.0" prefWidth="798.0" style="-fx-background-color: rgba(255,255,255,0.82);                    -fx-background-radius: 35;                    -fx-border-color: #BDEFFF;                    -fx-border-width: 5;                    -fx-border-radius: 35;                    -fx-effect: dropshadow(gaussian, rgba(0,79,130,0.45), 18, 0, 0, 7);">
+         <children>
+            <ImageView fitHeight="58.0" fitWidth="58.0" layoutX="75.0" layoutY="125.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/mesa.png" />
+               </image>
+            </ImageView>
+            <Label layoutX="145.0" layoutY="142.0" text="Número de Mesa" textFill="#003B7A">
+               <font>
+                  <Font name="System Bold" size="19.0" />
+               </font>
+            </Label>
+            <ImageView fitHeight="58.0" fitWidth="58.0" layoutX="75.0" layoutY="201.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/iconTarjeta.png" />
+               </image>
+            </ImageView>
+            <Label layoutX="147.0" layoutY="216.0" text="Método de Pago" textFill="#003B7A">
+               <font>
+                  <Font name="System Bold" size="19.0" />
+               </font>
+            </Label>
+            <ComboBox fx:id="cbMetodo" layoutX="399.0" layoutY="204.0" prefHeight="52.0" prefWidth="220.0" promptText="Seleccione método" style="-fx-background-color: white;                              -fx-background-radius: 13;                              -fx-border-color: #7CBFF0;                              -fx-border-radius: 13;                              -fx-border-width: 2;                              -fx-font-size: 15px;                              -fx-padding: 4;" />
+            <ImageView fitHeight="58.0" fitWidth="58.0" layoutX="75.0" layoutY="290.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/monedas.png" />
+               </image>
+            </ImageView>
+            <Label layoutX="145.0" layoutY="301.0" text="Monto Pagado" textFill="#003B7A">
+               <font>
+                  <Font name="System Bold" size="19.0" />
+               </font>
+            </Label>
+            <TextField fx:id="txtMonto" layoutX="399.0" layoutY="289.0" prefHeight="52.0" prefWidth="220.0" promptText="0.00" style="-fx-background-color: white;                               -fx-background-radius: 13;                               -fx-border-color: #7CBFF0;                               -fx-border-radius: 13;                               -fx-border-width: 2;                               -fx-font-size: 16px;                               -fx-padding: 0 12 0 12;                               -fx-text-fill: #263238;" />
+            <Button fx:id="btnRegistrarPago" layoutX="244.0" layoutY="384.0" mnemonicParsing="false" onAction="#btnRegistrarPago" prefHeight="65.0" prefWidth="255.0" style="-fx-background-color: linear-gradient(to bottom, #8DED45, #49B813);                            -fx-background-radius: 20;                            -fx-border-color: #2C8610;                            -fx-border-width: 4;                            -fx-border-radius: 20;                            -fx-text-fill: white;                            -fx-font-size: 23px;                            -fx-font-weight: bold;                            -fx-cursor: hand;                            -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.45), 8, 0, 0, 5);" text="Registrar Pago">
+               <graphic>
+                  <ImageView fitHeight="32.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../img/monedas.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
+            </Button>      
+            <ImageView fitHeight="220.0" fitWidth="190.0" layoutX="582.0" layoutY="301.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/caja%20regs%20pingun.png" />
+               </image>
+            </ImageView>
+            <ComboBox fx:id="cmbMesa" layoutX="399.0" layoutY="130.0" prefHeight="52.0" prefWidth="220.0" style="-fx-background-color: white;                              -fx-background-radius: 13;                              -fx-border-color: #7CBFF0;                              -fx-border-radius: 13;                              -fx-border-width: 2;                              -fx-font-size: 15px;                              -fx-padding: 4;" />
+         </children>
+      </Pane>
+      <ImageView fitHeight="110.0" fitWidth="150.0" layoutX="45.0" layoutY="605.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@../img/monedas.png" />
+         </image>
+      </ImageView>
+      <Pane layoutX="250.0" layoutY="655.0" prefHeight="52.0" prefWidth="445.0" style="-fx-background-color: rgba(235,250,255,0.90);                    -fx-background-radius: 20;                    -fx-border-color: #86D9FF;                    -fx-border-width: 3;                    -fx-border-radius: 20;">
+         <children>
+            <Label layoutX="75.0" layoutY="16.0" text="Verifica los datos y confirma el pago para finalizar." textFill="#004987">
+               <font>
+                  <Font name="System Bold" size="15.0" />
+               </font>
+            </Label>
+
+            <ImageView fitHeight="34.0" fitWidth="34.0" layoutX="27.0" layoutY="10.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/iconInfo.png" />
+               </image>
+            </ImageView>
+         </children>
+      </Pane>
+      <ImageView fitHeight="190.0" fitWidth="424.0" layoutX="373.0" layoutY="47.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@../img/registroPago.png" />
+         </image>
+      </ImageView>
+   </children>
+</AnchorPane>

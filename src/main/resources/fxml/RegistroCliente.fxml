@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.effect.GaussianBlur?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="768.0" prefWidth="1024.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.restaurante.controller.RegistroClienteController">
+   <children>
+      <ImageView fitHeight="768.0" fitWidth="1024.0" pickOnBounds="true" smooth="true">
+         <image>
+            <Image url="@../img/fondo_registro.png" />
+         </image>
+         <effect>
+            <GaussianBlur radius="12.0" />
+         </effect>
+      </ImageView>
+
+      <VBox alignment="CENTER" layoutX="312.0" layoutY="134.0" prefHeight="500.0" prefWidth="400.0" spacing="20.0" style="-fx-background-color: rgba(0, 96, 100, 0.85); -fx-background-radius: 35; -fx-border-color: white; -fx-border-width: 6; -fx-border-radius: 30; -fx-padding: 35;">
+         <children>
+            <Label text="¡CREA TU CUENTA!" textFill="WHITE">
+               <font>
+                  <Font name="System Bold" size="32.0" />
+               </font>
+               <style>-fx-effect: dropshadow(one-pass-box, #0D47A1, 2, 2, 1, 1);</style>
+            </Label>
+            <Label text="Regístrate para reservar mesas" textFill="#E0F7FA">
+               <font>
+                  <Font name="System Italic" size="16.0" />
+               </font>
+               <VBox.margin>
+                  <Insets bottom="10.0" />
+               </VBox.margin>
+            </Label>
+
+            <VBox alignment="CENTER_LEFT" spacing="8.0">
+               <children>
+                  <Label text="Nombre de Pingüino:" textFill="WHITE">
+                     <font>
+                        <Font name="System Bold" size="15.0" />
+                     </font>
+                  </Label>
+                  <TextField fx:id="txtNombre" prefHeight="45.0" promptText="Ej. Ricardo " style="-fx-background-color: #E0F7FA; -fx-background-radius: 20; -fx-border-color: #0D47A1; -fx-border-width: 3; -fx-border-radius: 20; -fx-text-fill: #0D47A1; -fx-font-weight: bold; -fx-prompt-text-fill: #80DEEA;" />
+               </children>
+            </VBox>
+
+            <VBox alignment="CENTER_LEFT" spacing="8.0">
+               <children>
+                  <Label text="Teléfono (Será tu Contraseña):" textFill="WHITE">
+                     <font>
+                        <Font name="System Bold" size="15.0" />
+                     </font>
+                  </Label>
+                  <PasswordField fx:id="txtTelefono" prefHeight="45.0" promptText="Ej: 2281234567" style="-fx-background-color: #E0F7FA; -fx-background-radius: 20; -fx-border-color: #0D47A1; -fx-border-width: 3; -fx-border-radius: 20; -fx-text-fill: #0D47A1; -fx-font-weight: bold; -fx-prompt-text-fill: #80DEEA;" />
+               </children>
+            </VBox>
+
+            <VBox alignment="CENTER" spacing="18.0">
+               <VBox.margin>
+                  <Insets top="25.0" />
+               </VBox.margin>
+               <children>
+                  <Button mnemonicParsing="false" onAction="#clicRegistrar" prefHeight="50.0" prefWidth="280.0" style="-fx-background-color: #F9A825; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 25; -fx-font-size: 18; -fx-border-color: #B26A00; -fx-border-width: 3; -fx-border-radius: 23; -fx-cursor: hand;" styleClass="boton-enviar-chef" stylesheets="@../styles/styles.css" text="✔ REGISTRARME" />
+                  <Button mnemonicParsing="false" onAction="#clicVolver" prefHeight="40.0" prefWidth="280.0" style="-fx-background-color: #78909C; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 25; -fx-font-size: 14; -fx-border-color: #546E7A; -fx-border-width: 3; -fx-border-radius: 23; -fx-cursor: hand;" text="❌ Cancelar y Volver" />
+               </children>
+            </VBox>
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>

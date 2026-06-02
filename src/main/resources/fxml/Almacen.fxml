@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="768.0" prefWidth="1024.0" style="-fx-background-color: linear-gradient(to bottom right, #00BFFF, #0055A4);" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.restaurante.controller.AlmacenController">
+   <children>
+      <Pane layoutX="73.0" layoutY="108.0" prefHeight="500.0" prefWidth="877.0" style="-fx-background-color: ffffff; -fx-background-radius: 25; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 15, 0, 0, 8); -fx-opacity: .9;">
+         <children>
+            
+            <VBox alignment="CENTER_LEFT" layoutX="36.0" layoutY="78.0" prefWidth="224.0" spacing="5.0">
+               <children>
+                  <Label text="Producto (Ingrediente):" textFill="#263238">
+                     <font><Font name="System Bold" size="13.0" /></font>
+                  </Label>
+                  <ComboBox fx:id="cmbNombre" editable="true" prefHeight="35.0" prefWidth="224.0" promptText="Selecciona o escribe..." style="-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #00BFFF; -fx-border-radius: 10; -fx-border-width: 2;" />
+               </children>
+            </VBox>
+            
+            <VBox alignment="CENTER_LEFT" layoutX="36.0" layoutY="148.0" prefWidth="224.0" spacing="5.0">
+               <children>
+                  <Label text="Cantidad en Stock:" textFill="#263238">
+                     <font><Font name="System Bold" size="13.0" /></font>
+                  </Label>
+                  <TextField fx:id="txtCantidad" promptText="0.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #00BFFF; -fx-border-radius: 10; -fx-border-width: 2; -fx-padding: 8;" />
+               </children>
+            </VBox>
+            
+            <VBox alignment="CENTER_LEFT" layoutX="36.0" layoutY="218.0" prefWidth="224.0" spacing="5.0">
+               <children>
+                  <Label text="Unidad de Medida:" textFill="#263238">
+                     <font><Font name="System Bold" size="13.0" /></font>
+                  </Label>
+                  <ComboBox fx:id="cbUnidad" prefHeight="35.0" prefWidth="224.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #00BFFF; -fx-border-radius: 10; -fx-border-width: 2;" />
+               </children>
+            </VBox>
+            
+            <VBox alignment="CENTER_LEFT" layoutX="36.0" layoutY="288.0" prefWidth="224.0" spacing="5.0">
+               <children>
+                  <Label text="Stock Mínimo (Alerta):" textFill="#263238">
+                     <font><Font name="System Bold" size="13.0" /></font>
+                  </Label>
+                  <TextField fx:id="txtStockMinimo" promptText="0.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #00BFFF; -fx-border-radius: 10; -fx-border-width: 2; -fx-padding: 8;" />
+               </children>
+            </VBox>
+            
+            <TableView fx:id="tblAlmacen" layoutX="280.0" layoutY="92.0" prefHeight="330.0" prefWidth="560.0" style="-fx-background-radius: 10;">
+              <columns>
+                <TableColumn fx:id="colNombre" prefWidth="200.0" style="-fx-background-color: ffffff;" text="Producto" />
+                <TableColumn fx:id="colCantidad" prefWidth="100.0" style="-fx-background-color: ffffff;" text="Cantidad" />
+                <TableColumn fx:id="colUnidad" prefWidth="140.800048828125" style="-fx-background-color: ffffff;" text="Unidad" />
+                <TableColumn fx:id="colMinimo" prefWidth="118.39990234375" style="-fx-background-color: ffffff;" text="Stock Mínimo" />
+              </columns>
+            </TableView>
+
+            <Button layoutX="36.0" layoutY="430.0" mnemonicParsing="false" onAction="#clicLimpiar" prefHeight="40.0" prefWidth="100.0" style="-fx-background-color: #FFB300; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 10;" text="LIMPIAR" />
+            <Button layoutX="160.0" layoutY="430.0" mnemonicParsing="false" onAction="#clicGuardar" prefHeight="40.0" prefWidth="100.0" style="-fx-background-color: #00C853; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 10;" text="GUARDAR" />
+            <Button layoutX="740.0" layoutY="430.0" mnemonicParsing="false" onAction="#clicVolver" prefHeight="40.0" prefWidth="100.0" style="-fx-background-color: #A0D3F2; -fx-text-fill: gray; -fx-font-weight: bold; -fx-background-radius: 10;" text="VOLVER" />
+            <Label layoutX="289.0" layoutY="-19.0" prefHeight="90.0" prefWidth="337.0" style="-fx-font-family: Arial Rounded MT Bold; -fx-font-size: 26; -fx-background-color: #A0D3F2; -fx-text-fill: white; -fx-background-radius: 20; -fx-text-alignment: center; -fx-line-spacing: -5; -fx-view-order: -1.0; -fx-border-color: #005A95; -fx-border-width: 3; -fx-border-radius: 18; -fx-font-weight: bold; -fx-effect: dropshadow(three-pass-box, black, 10, 0.5, 0, 5);" textFill="WHITE">
+               <graphic>
+                  <ImageView fitHeight="83.0" fitWidth="349.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../img/Control%20de%20almacen.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
+            </Label>
+         </children>
+      </Pane>
+   </children>
+</AnchorPane>

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import java.lang.String?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="768.0" prefWidth="1024.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.restaurante.controller.ConsultarReservacionController">
+   <children>
+      <ImageView fitHeight="802.0" fitWidth="1024.0" pickOnBounds="true">
+         <image>
+            <Image url="@../img/fondo.png" />
+         </image>
+      </ImageView>
+      
+      <Button layoutX="30.0" layoutY="30.0" mnemonicParsing="false" onAction="#handleRegresar" prefHeight="40.0" prefWidth="150.0" style="-fx-background-color: #ffcc00; -fx-text-fill: #173dae; -fx-font-weight: bold; -fx-background-radius: 15;" text="⬅ VOLVER" />
+      
+      <VBox alignment="TOP_CENTER" layoutX="227.0" layoutY="45.0" prefHeight="650.0" prefWidth="600.0" style="-fx-background-color: #FFF8E1; -fx-background-radius: 25; -fx-padding: 25; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 15, 0, 0, 8);">
+         <children>
+            <Pane prefHeight="75.0" prefWidth="550.0">
+               <children>
+                  <Label alignment="CENTER" layoutX="2.0" prefHeight="53.0" prefWidth="543.0" text="SISTEMA DE RESERVACIONES" textFill="#173dae">
+                     <font>
+                        <Font name="System Bold" size="30.0" />
+                     </font>
+                  </Label>
+                  <Label alignment="CENTER" layoutX="2.0" layoutY="43.0" prefHeight="20.0" prefWidth="543.0" text="Consulta, modifica o cancela el estatus de tu mesa" textFill="#1a237e">
+                     <font>
+                        <Font name="System Italic" size="14.0" />
+                     </font>
+                  </Label>
+               </children>
+            </Pane>
+            
+            <HBox alignment="CENTER" prefHeight="70.0" prefWidth="550.0" spacing="15.0" style="-fx-background-color: white; -fx-background-radius: 15; -fx-border-color: #00BFFF; -fx-border-radius: 15; -fx-border-width: 2;">
+               <children>
+                  <Label text="Ingresa tu ID:" textFill="#263238">
+                     <font>
+                        <Font name="System Bold" size="14.0" />
+                     </font>
+                  </Label>
+                  <TextField fx:id="txtFolio" prefHeight="35.0" prefWidth="250.0" promptText="Ej: CP001" style="-fx-background-radius: 8;" />
+                  <Button fx:id="btnBuscar" mnemonicParsing="false" onAction="#clicBuscar" prefHeight="35.0" prefWidth="100.0" style="-fx-background-color: #173dae; -fx-text-fill: white; -fx-background-radius: 8; -fx-font-weight: bold;" text="Buscar 🔍" />
+               </children>
+               <VBox.margin>
+                  <Insets top="25.0" />
+               </VBox.margin>
+               <padding>
+                  <Insets bottom="10.0" top="10.0" />
+               </padding>
+            </HBox>
+            
+            <VBox fx:id="panelInfo" alignment="TOP_CENTER" prefHeight="320.0" prefWidth="550.0" spacing="12.0" style="-fx-background-color: white; -fx-background-radius: 20; -fx-border-color: #1e73ff; -fx-border-width: 2; -fx-padding: 20;">
+               <VBox.margin>
+                  <Insets top="25.0" />
+               </VBox.margin>
+               <children>
+                  <Label text="Detalles de la Reservación" textFill="#173dae">
+                     <font>
+                        <Font name="System Bold" size="18.0" />
+                     </font>
+                  </Label>
+                  <HBox prefHeight="30.0" prefWidth="506.0">
+                     <children>
+                        <Label prefWidth="150.0" style="-fx-font-weight: bold;" text="Cliente:" textFill="#455a64" />
+                        <Label fx:id="lblCliente" text="---" textFill="#263238" />
+                     </children>
+                  </HBox>
+                  <HBox prefHeight="30.0" prefWidth="506.0">
+                     <children>
+                        <Label prefWidth="150.0" style="-fx-font-weight: bold;" text="Mesa Asignada:" textFill="#455a64" />
+                        <Label fx:id="lblMesa" text="---" textFill="#263238" />
+                     </children>
+                  </HBox>
+                  <HBox prefHeight="30.0" prefWidth="506.0">
+                     <children>
+                        <Label prefWidth="150.0" style="-fx-font-weight: bold;" text="Fecha:" textFill="#455a64" />
+                        <Label fx:id="lblFecha" text="---" textFill="#263238" />
+                     </children>
+                  </HBox>
+                  <HBox prefHeight="30.0" prefWidth="506.0">
+                     <children>
+                        <Label prefWidth="150.0" style="-fx-font-weight: bold;" text="Hora:" textFill="#455a64" />
+                        <Label fx:id="lblHora" text="---" textFill="#263238" />
+                     </children>
+                  </HBox>
+                  <HBox prefHeight="30.0" prefWidth="506.0">
+                     <children>
+                        <Label prefWidth="150.0" style="-fx-font-weight: bold;" text="No. Personas:" textFill="#455a64" />
+                        <Label fx:id="lblPersonas" text="---" textFill="#263238" />
+                     </children>
+                  </HBox>
+                  <HBox prefHeight="30.0" prefWidth="506.0">
+                     <children>
+                        <Label prefWidth="150.0" style="-fx-font-weight: bold;" text="Estado actual:" textFill="#455a64" />
+                        <Label fx:id="lblEstado" style="-fx-font-weight: bold;" text="---" textFill="#e65100" />
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+            
+            <HBox alignment="CENTER" prefHeight="80.0" prefWidth="550.0" spacing="40.0">
+               <children>
+                  <Button fx:id="btnModificar" disable="true" mnemonicParsing="false" onAction="#clicModificar" prefHeight="40.0" prefWidth="180.0" style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-background-radius: 12; -fx-font-weight: bold; -fx-font-size: 14;" text="⚙ Modificar Fecha/Hora" />
+                  <Button fx:id="btnCancelar" disable="true" mnemonicParsing="false" onAction="#clicCancelar" prefHeight="40.0" prefWidth="180.0" style="-fx-background-color: #F44336; -fx-text-fill: white; -fx-background-radius: 12; -fx-font-weight: bold; -fx-font-size: 14;" text="❌ Cancelar Reservación" />
+               </children>
+               <VBox.margin>
+                  <Insets top="20.0" />
+               </VBox.margin>
+            </HBox>
+         </children>
+      </VBox>
+      <Pane layoutY="735.0" prefHeight="40.0" prefWidth="1024.0" style="-fx-background-color: #173dae;" />
+   </children>
+</AnchorPane>
