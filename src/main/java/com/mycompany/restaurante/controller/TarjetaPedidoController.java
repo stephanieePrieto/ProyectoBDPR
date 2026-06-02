@@ -1,6 +1,6 @@
 package com.mycompany.restaurante.controller;
 
-import com.mycompany.restaurante.modelo.sql.MySQLConnect;
+import com.mycompany.restaurante.modelo.sql.OracleConnect; // Conexión a Oracle Cloud
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -12,9 +12,8 @@ import javafx.scene.control.TextArea;
 
 /**
  * Controlador de componente autónomo correspondiente a la Tarjeta de Pedido.
- * Gobierna el comportamiento de los nodos de comanda en el panel de cocina, 
- * permitiendo despachar pedidos de forma síncrona.
- * * @author Ricardo, Diego, Angel, Stephy
+ * Migrado a arquitectura Oracle Cloud.
+ * @author Ricardo, Diego, Angel, Stephy
  */
 public class TarjetaPedidoController {
 
@@ -28,7 +27,7 @@ public class TarjetaPedidoController {
 
     /**
      * Acopla la información del pedido sobre los controles de la tarjeta.
-     * @param idPedido Identificador de la comanda en MySQL.
+     * @param idPedido Identificador de la comanda en Oracle.
      * @param idMesa Número de locación que solicita el consumo.
      * @param hora Cadena con la hora de captura del registro.
      * @param textoPlatillos Bloque textual con el desglose del alimento.
@@ -45,26 +44,27 @@ public class TarjetaPedidoController {
     }
 
     /**
-     * Modifica el estado de la orden en la BD y remueve el componente visual.
-     * Ejecuta un UPDATE transaccional sobre la tabla para cambiar la orden a
-     * estado 'Listo' e instruye al controlador padre refrescar la cocina.
+     * Modifica el estado de la orden en Oracle Cloud y remueve el componente visual.
      * @param event Evento de acción disparado por el botón "Listo".
      */
     @FXML
     void clicDespachar(ActionEvent event) {
-        MySQLConnect mysql = new MySQLConnect();
+        // Usamos OracleConnect en lugar de MySQLConnect
         String sql = "UPDATE pedidos SET estado = 'Listo' WHERE idPedido = ?";
         
-        try (Connection con = mysql.connection();
+        try (Connection con = OracleConnect.getConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {
             
             ps.setInt(1, idPedido);
             ps.executeUpdate();
             
             // Actualiza la vista del Chef automáticamente
-            pantallaPadre.cargarComandasActivas();
+            if (pantallaPadre != null) {
+                pantallaPadre.cargarComandasActivas();
+            }
             
         } catch (SQLException e) {
+            System.err.println("❌ Error al despachar pedido en Oracle: " + e.getMessage());
             e.printStackTrace();
         }
     }

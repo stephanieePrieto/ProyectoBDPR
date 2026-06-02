@@ -2,64 +2,39 @@ package com.mycompany.restaurante.dao;
 
 import com.mycompany.restaurante.modelo.pojo.DetalleFactura;
 import com.mycompany.restaurante.modelo.pojo.Platillo;
-import com.mycompany.restaurante.utils.ConexionBD;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
+import com.mycompany.restaurante.modelo.sql.OracleConnect;
+import java.sql.*;
+import java.util.*;
+import javafx.collections.*;
 
 /**
- * Clase de Acceso a Datos (DAO) para la gestión de detalles de facturación.
- * Encapsula la lógica para consolidar los consumos por mesa, aislando
- * las comandas activas de los pedidos liquidados históricamente.
- * * @author Stephanie Hernandez
+ * Clase DAO para la gestión de detalles de facturación en Oracle Cloud.
  */
 public class DetalleFacturaDAO {
 
-    /**
-     * Calcula el subtotal acumulado de un pedido activo en el comedor.
-     * Restringe la búsqueda estrictamente a estados 'Pendiente' o 'Listo'.
-     */
     public double obtenerSubtotalMesa(int idMesa) {
-        double subtotal = 0.0;
         String sql = "SELECT SUM(p.precio * dp.cantidad) AS subtotal "
-                + "FROM detallepedidos dp "
-                + "JOIN platillos p ON dp.idPlatillo = p.idPlatillo "
-                + "JOIN pedidos pe ON dp.idPedido = pe.idPedido "
-                + "WHERE pe.idMesa = ? AND pe.estado IN ('Pendiente', 'Listo')";
+                   + "FROM detallepedidos dp JOIN platillos p ON dp.idPlatillo = p.idPlatillo "
+                   + "JOIN pedidos pe ON dp.idPedido = pe.idPedido "
+                   + "WHERE pe.idMesa = ? AND pe.estado IN ('Pendiente', 'Listo')";
 
-        try (Connection con = ConexionBD.conectar();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = OracleConnect.getConexion(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, idMesa);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    subtotal = rs.getDouble("subtotal");
-                }
+                return rs.next() ? rs.getDouble("subtotal") : 0.0;
             }
-        } catch (SQLException e) {
-            System.err.println("Error al obtener subtotal: " + e.getMessage());
-        }
-        return subtotal;
+        } catch (SQLException e) { e.printStackTrace(); return 0.0; }
     }
 
-    /**
-     * Recupera el listado de platillos activos de una mesa en servicio.
-     */
     public List<Platillo> obtenerDetallePedidoPorMesa(int idMesa) {
         List<Platillo> lista = new ArrayList<>();
         String sql = "SELECT p.nombre, dp.cantidad, p.precio "
-                + "FROM detallepedidos dp "
-                + "JOIN platillos p ON dp.idPlatillo = p.idPlatillo "
-                + "JOIN pedidos pe ON dp.idPedido = pe.idPedido "
-                + "WHERE pe.idMesa = ? AND pe.estado IN ('Pendiente', 'Listo') "
-                + "ORDER BY pe.idPedido DESC";
+                   + "FROM detallepedidos dp JOIN platillos p ON dp.idPlatillo = p.idPlatillo "
+                   + "JOIN pedidos pe ON dp.idPedido = pe.idPedido "
+                   + "WHERE pe.idMesa = ? AND pe.estado IN ('Pendiente', 'Listo') "
+                   + "ORDER BY pe.idPedido DESC";
 
-        try (Connection con = ConexionBD.conectar();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = OracleConnect.getConexion(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, idMesa);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -70,69 +45,43 @@ public class DetalleFacturaDAO {
                     lista.add(platillo);
                 }
             }
-        } catch (SQLException e) {
-            System.err.println("Error al obtener detalle: " + e.getMessage());
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
         return lista;
     }
 
-    /**
-     * Obtiene la última comanda activa o recientemente pagada de una mesa.
-     */
     public int obtenerPedidoPorMesa(int idMesa) {
-        int idPedido = 0;
-        String sql = "SELECT idPedido FROM pedidos "
-                + "WHERE idMesa = ? AND estado IN ('Pendiente', 'Listo', 'Pagado') "
-                + "ORDER BY idPedido DESC LIMIT 1";
+        // Oracle: FETCH FIRST 1 ROWS ONLY para sustituir LIMIT 1
+        String sql = "SELECT idPedido FROM pedidos WHERE idMesa = ? AND estado IN ('Pendiente', 'Listo', 'Pagado') "
+                   + "ORDER BY idPedido DESC FETCH FIRST 1 ROWS ONLY";
 
-        try (Connection con = ConexionBD.conectar();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = OracleConnect.getConexion(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, idMesa);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    idPedido = rs.getInt("idPedido");
-                }
+                return rs.next() ? rs.getInt("idPedido") : 0;
             }
-        } catch (SQLException e) {
-            System.err.println("Error al obtener idPedido: " + e.getMessage());
-        }
-        return idPedido;
+        } catch (SQLException e) { e.printStackTrace(); return 0; }
     }
 
-    /**
-     * Recupera los conceptos de facturación CFDI del último pedido LIQUIDADO.
-     * Previene colisiones si la mesa vuelve a ser ocupada en el mismo turno.
-     */
     public ObservableList<DetalleFactura> obtenerDetallesFactura(int idMesa) {
         ObservableList<DetalleFactura> lista = FXCollections.observableArrayList();
-        String sql = "SELECT p.nombre, d.cantidad, p.precio, "
-                + "(p.precio * d.cantidad) AS fila_subtotal "
-                + "FROM detallepedidos d "
-                + "JOIN platillos p ON d.idPlatillo = p.idPlatillo "
-                + "JOIN pedidos pe ON d.idPedido = pe.idPedido "
-                + "WHERE pe.idMesa = ? AND pe.estado = 'Pagado' "
-                + "AND pe.idPedido = (SELECT MAX(idPedido) FROM pedidos "
-                + "WHERE idMesa = ? AND estado = 'Pagado')";
+        // Subconsulta para el pedido pagado más reciente
+        String sql = "SELECT p.nombre, d.cantidad, p.precio, (p.precio * d.cantidad) AS fila_subtotal "
+                   + "FROM detallepedidos d JOIN platillos p ON d.idPlatillo = p.idPlatillo "
+                   + "JOIN pedidos pe ON d.idPedido = pe.idPedido "
+                   + "WHERE pe.idMesa = ? AND pe.estado = 'Pagado' "
+                   + "AND pe.idPedido = (SELECT MAX(idPedido) FROM pedidos WHERE idMesa = ? AND estado = 'Pagado')";
 
-        try (Connection con = ConexionBD.conectar();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, idMesa);
-            ps.setInt(2, idMesa);
+        try (Connection con = OracleConnect.getConexion(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idMesa); ps.setInt(2, idMesa);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     lista.add(new DetalleFactura(
-                            "90101501", // Clave SAT: Restaurantes
-                            rs.getInt("text_cantidad"),
-                            "E48",      // Clave SAT: Servicio
-                            rs.getString("nombre"),
-                            rs.getDouble("precio"),
-                            rs.getDouble("fila_subtotal")
+                        "90101501", rs.getInt("cantidad"), "E48", 
+                        rs.getString("nombre"), rs.getDouble("precio"), rs.getDouble("fila_subtotal")
                     ));
                 }
             }
-        } catch (SQLException e) {
-            System.err.println("Error en detalles factura: " + e.getMessage());
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
         return lista;
     }
 }

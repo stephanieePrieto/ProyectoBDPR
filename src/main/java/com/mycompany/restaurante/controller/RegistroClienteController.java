@@ -1,8 +1,7 @@
 package com.mycompany.restaurante.controller;
 
 import com.mycompany.restaurante.App;
-import com.mycompany.restaurante.modelo.sql.MySQLConnect;
-import java.io.IOException;
+import com.mycompany.restaurante.modelo.sql.OracleConnect; // Conexión a Oracle Cloud
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -19,10 +18,8 @@ import javafx.stage.Stage;
 
 /**
  * Controlador encargado del módulo de registro para nuevos clientes.
- * Gestiona la captura de datos de contacto y automatiza la creación de 
- * identificadores únicos (IDs) alfanuméricos, garantizando la integridad 
- * de la base de datos sin requerir asignaciones manuales.
- * * @author Ricardo, Diego, Angel, Stephy
+ * Migrado a arquitectura Oracle Cloud.
+ * @author Ricardo, Diego, Angel, Stephy
  */
 public class RegistroClienteController {
 
@@ -32,10 +29,8 @@ public class RegistroClienteController {
     /**
      * Procesa la solicitud de inscripción de un nuevo cliente al sistema.
      * Valida la entrada de datos, genera secuencialmente el siguiente ID disponible 
-     * (Ej. de CP001 a CP002) y persiste la información en la base de datos.
-     * Finaliza mostrando las credenciales generadas para que el cliente las resguarde 
-     * y redirige automáticamente a la pantalla de inicio de sesión.
-     * * @param event Evento disparado por el botón "Registrarse".
+     * (Ej. de CP001 a CP002) y persiste la información en la base de datos Oracle.
+     * @param event Evento disparado por el botón "Registrarse".
      */
     @FXML
     void clicRegistrar(ActionEvent event) {
@@ -47,10 +42,11 @@ public class RegistroClienteController {
             return;
         }
 
-        try (Connection con = MySQLConnect.getConexion()) {
+        try (Connection con = OracleConnect.getConexion()) {
             // 1. Lógica para auto-generar el ID alfanumérico (CP001, CP002, etc.)
+            // En Oracle usamos FETCH FIRST 1 ROW ONLY en lugar de LIMIT 1
             String nuevoId = "CP001";
-            String sqlMax = "SELECT id_cliente FROM clientes WHERE id_cliente LIKE 'CP%' ORDER BY id_cliente DESC LIMIT 1";
+            String sqlMax = "SELECT id_cliente FROM clientes WHERE id_cliente LIKE 'CP%' ORDER BY id_cliente DESC FETCH FIRST 1 ROW ONLY";
             
             try (PreparedStatement psMax = con.prepareStatement(sqlMax);
                  ResultSet rsMax = psMax.executeQuery()) {
@@ -66,10 +62,9 @@ public class RegistroClienteController {
             try (PreparedStatement psInsert = con.prepareStatement(sqlInsert)) {
                 psInsert.setString(1, nuevoId);
                 psInsert.setString(2, nombre);
-                psInsert.setString(3, telefono); // Guardamos el teléfono como contraseña de acceso
+                psInsert.setString(3, telefono); 
                 psInsert.executeUpdate();
                 
-                // Mostrar alerta de éxito ENORME para que el cliente anote su ID
                 mostrarAlerta("¡Registro Exitoso!", 
                     "¡Bienvenido al Pizzatron, " + nombre + "!\n\n" +
                     "TU ID DE PINGÜINO ES: " + nuevoId + "\n" +
@@ -77,19 +72,18 @@ public class RegistroClienteController {
                     "Anota tu ID, lo necesitarás para iniciar sesión.", 
                     Alert.AlertType.INFORMATION);
                 
-                // Redirección encapsulada por seguridad
                 irAlLogin();
             }
             
         } catch (SQLException e) {
-            mostrarAlerta("Error", "Hubo un problema al crear la cuenta: " + e.getMessage(), Alert.AlertType.ERROR);
+            mostrarAlerta("Error", "Hubo un problema al crear la cuenta en Oracle: " + e.getMessage(), Alert.AlertType.ERROR);
             e.printStackTrace();
         }
     }
 
     /**
      * Interrumpe el proceso de registro y retorna a la interfaz principal de autenticación.
-     * * @param event Evento disparado por el botón "Volver".
+     * @param event Evento disparado por el botón "Volver".
      */
     @FXML
     void clicVolver(ActionEvent event) {
@@ -98,14 +92,12 @@ public class RegistroClienteController {
 
     /**
      * Centraliza la lógica de navegación hacia la vista de Login.
-     * Implementada como un método privado para garantizar que tanto las salidas voluntarias 
-     * como las redirecciones automáticas post-registro sigan el mismo flujo seguro.
      */
     private void irAlLogin() {
         try {
             FXMLLoader loader = App.getFXMLLoader("Login");
             Parent root = loader.load();
-            Stage stage = (Stage) txtNombre.getScene().getWindow(); // Agarra la ventana actual sin fallar
+            Stage stage = (Stage) txtNombre.getScene().getWindow();
             stage.setScene(new Scene(root));
             stage.setTitle("Iniciar Sesión - Pizzatron 3000");
             stage.show();
@@ -117,9 +109,6 @@ public class RegistroClienteController {
 
     /**
      * Construye y despliega un cuadro de diálogo dinámico para notificar al usuario.
-     * * @param titulo  El texto que se mostrará en la barra de título de la alerta.
-     * @param mensaje El cuerpo descriptivo de la información o error.
-     * @param tipo    La categoría visual de la ventana (Ej. WARNING, ERROR, INFORMATION).
      */
     private void mostrarAlerta(String titulo, String mensaje, Alert.AlertType tipo) {
         Alert alerta = new Alert(tipo);

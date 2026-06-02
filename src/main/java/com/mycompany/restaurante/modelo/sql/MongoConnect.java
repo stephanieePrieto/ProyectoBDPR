@@ -39,9 +39,9 @@ public class MongoConnect {
             this.mongoClient = MongoClients.create(settings);
             this.database = mongoClient.getDatabase(dbName);
             
-            System.out.println("🍃 ¡Conexión exitosa a MongoDB con mapeo de POJOs habilitado!");
+            System.out.println("Conexión exitosa a MongoDB");
         } catch (Exception e) {
-            System.err.println("❌ Error Crítico de Conexión MongoDB: " + e.getMessage());
+            System.err.println("Error de Conexión MongoDB: " + e.getMessage());
             e.printStackTrace();
         }
         instance = this;
@@ -54,7 +54,7 @@ public class MongoConnect {
     public void close() {
         if (mongoClient != null) {
             mongoClient.close();
-            System.out.println("🔒 [MongoDB] Conexión cerrada correctamente.");
+            System.out.println("Conexión cerrada correctamente.");
         }
     }
 

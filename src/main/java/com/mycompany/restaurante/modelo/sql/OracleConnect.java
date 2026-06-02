@@ -22,13 +22,13 @@ public class OracleConnect {
             if (conn == null || conn.isClosed()) {
                 // Conexión directa usando la cadena segura de Oracle Cloud
                 conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-                System.out.println("🎉 [Oracle Cloud] ¡Conexión establecida con éxito en la nube de Oracle!");
+                System.out.println("Conexion establecida con exito en la nube de Oracle");
             }
         } catch (ClassNotFoundException e) {
-            System.err.println("❌ Error: No se encontró el driver de Oracle.");
+            System.err.println("Error: No se encontro el driver de Oracle.");
             e.printStackTrace();
         } catch (SQLException e) {
-            System.err.println("❌ Error Crítico de Conexión Oracle Cloud: " + e.getMessage());
+            System.err.println("Error de Conexion Oracle" + e.getMessage());
         }
         
         return conn;
@@ -38,7 +38,7 @@ public class OracleConnect {
         try {
             if (conn != null && !conn.isClosed()) {
                 conn.close();
-                System.out.println("🔒 [Oracle Cloud] Conexión cerrada correctamente.");
+                System.out.println("Conexion cerrada correctamente.");
             }
         } catch (SQLException e) {
             e.printStackTrace();

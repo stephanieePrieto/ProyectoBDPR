@@ -1,10 +1,9 @@
 package com.mycompany.restaurante.controller;
 
 import com.mycompany.restaurante.App;
-import com.mycompany.restaurante.modelo.sql.MySQLConnect;
+import com.mycompany.restaurante.modelo.sql.OracleConnect;
 import com.mycompany.restaurante.dao.ReservacionDAO;
 import com.mycompany.restaurante.modelo.pojo.Reservacion;
-import com.mycompany.restaurante.utils.ConexionBD;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -27,9 +26,8 @@ import javafx.stage.Stage;
 
 /**
  * Controlador de la vista del cliente para el seguimiento de sus reservaciones.
- * Permite a los clientes buscar, visualizar, modificar y cancelar su reservación activa,
- * implementando barreras de seguridad para evitar el acceso no autorizado a datos de terceros.
- * * @author Ricardo, Diego, Angel, Stephy
+ * Migrado a arquitectura Oracle Cloud.
+ * @author Ricardo, Diego, Angel, Stephy
  */
 public class ConsultarReservacionController {
 
@@ -42,10 +40,6 @@ public class ConsultarReservacionController {
     private Reservacion reservacionActual = null;
     private final ReservacionDAO dao = new ReservacionDAO();
 
-    /**
-     * Retorna la navegación a la pantalla principal de reservaciones del cliente.
-     * * @param event El evento desencadenado por el botón de regresar.
-     */
     @FXML
     void handleRegresar(ActionEvent event) {
         try {
@@ -58,13 +52,6 @@ public class ConsultarReservacionController {
         }
     }
 
-    /**
-     * Realiza la búsqueda de la reservación activa en base al ID del cliente ingresado.
-     * Nota Técnica (Seguridad): Implementa protección contra vulnerabilidades IDOR (Insecure Direct 
-     * Object Reference) cruzando el ID buscado con el ID de la sesión global (App.idClienteLogueado).
-     * Si no coinciden, bloquea la consulta inmediatamente.
-     * * @param event El evento desencadenado al presionar el botón "Buscar".
-     */
     @FXML
     void clicBuscar(ActionEvent event) {
         String idBuscado = txtFolio.getText().trim().toUpperCase();
@@ -76,66 +63,57 @@ public class ConsultarReservacionController {
 
         if (App.idClienteLogueado != null && !idBuscado.equals(App.idClienteLogueado)) {
             mostrarAlerta("Acceso Denegado", 
-                "¡Ojo ahí! Solo tienes permiso para consultar y modificar tus propias reservaciones (Tu ID es: " + App.idClienteLogueado + ").", 
+                "¡Ojo ahí! Solo tienes permiso para consultar tus propias reservaciones.", 
                 Alert.AlertType.ERROR);
             limpiarCampos();
             return;
         }
 
-        try {
-            Connection con = MySQLConnect.getConexion();
-            String sql = "SELECT r.idReservacion, r.folioUnico, r.id_cliente, c.nombre AS nombre_cliente, " +
-                         "r.idMesa, r.fecha, r.hora, r.num_personas, r.estado " +
-                         "FROM reservaciones r " +
-                         "LEFT JOIN clientes c ON r.id_cliente = c.id_cliente " +
-                         "WHERE r.id_cliente = ? ORDER BY r.idReservacion DESC LIMIT 1";
+        // Consulta ajustada para Oracle: Uso de FETCH FIRST 1 ROW ONLY
+        String sql = "SELECT r.idReservacion, r.folioUnico, r.id_cliente, c.nombre AS nombre_cliente, " +
+                     "r.idMesa, r.fecha, r.hora, r.num_personas, r.estado " +
+                     "FROM reservaciones r " +
+                     "LEFT JOIN clientes c ON r.id_cliente = c.id_cliente " +
+                     "WHERE r.id_cliente = ? ORDER BY r.idReservacion DESC FETCH FIRST 1 ROW ONLY";
 
-            try (PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setString(1, idBuscado);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        reservacionActual = new Reservacion(
-                            rs.getInt("idReservacion"),
-                            rs.getString("folioUnico"),
-                            rs.getString("id_cliente"),
-                            rs.getString("nombre_cliente"),
-                            rs.getInt("idMesa"),
-                            rs.getString("fecha"),
-                            rs.getString("hora"),
-                            rs.getInt("num_personas"),
-                            rs.getString("estado")
-                        );
-                        
-                        lblCliente.setText(reservacionActual.getNombreCliente());
-                        lblMesa.setText("Mesa No. " + reservacionActual.getIdMesa());
-                        lblFecha.setText(reservacionActual.getFecha());
-                        lblHora.setText(reservacionActual.getHora());
-                        lblPersonas.setText(String.valueOf(reservacionActual.getNumPersonas()));
-                        
-                        String estado = reservacionActual.getEstado().toUpperCase();
-                        lblEstado.setText(estado);
-                        
-                        boolean activa = !estado.equalsIgnoreCase("CANCELADA");
-                        btnModificar.setDisable(!activa);
-                        btnCancelar.setDisable(!activa);
-                    } else {
-                        limpiarCampos();
-                        mostrarAlerta("No Encontrado", "No tienes ninguna reservación activa bajo este ID.", Alert.AlertType.INFORMATION);
-                    }
+        try (Connection con = OracleConnect.getConexion();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, idBuscado);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    reservacionActual = new Reservacion(
+                        rs.getInt("idReservacion"),
+                        rs.getString("folioUnico"),
+                        rs.getString("id_cliente"),
+                        rs.getString("nombre_cliente"),
+                        rs.getInt("idMesa"),
+                        rs.getDate("fecha").toString(),
+                        rs.getString("hora"),
+                        rs.getInt("num_personas"),
+                        rs.getString("estado")
+                    );
+                    
+                    lblCliente.setText(reservacionActual.getNombreCliente());
+                    lblMesa.setText("Mesa No. " + reservacionActual.getIdMesa());
+                    lblFecha.setText(reservacionActual.getFecha());
+                    lblHora.setText(reservacionActual.getHora());
+                    lblPersonas.setText(String.valueOf(reservacionActual.getNumPersonas()));
+                    lblEstado.setText(reservacionActual.getEstado().toUpperCase());
+                    
+                    boolean activa = !lblEstado.getText().equalsIgnoreCase("CANCELADA");
+                    btnModificar.setDisable(!activa);
+                    btnCancelar.setDisable(!activa);
+                } else {
+                    limpiarCampos();
+                    mostrarAlerta("No Encontrado", "No tienes ninguna reservación activa bajo este ID.", Alert.AlertType.INFORMATION);
                 }
             }
         } catch (SQLException e) {
-            mostrarAlerta("Error de Conexión", "Problema al conectar con MySQL: " + e.getMessage(), Alert.AlertType.ERROR);
+            mostrarAlerta("Error de Conexión", "Problema al conectar con Oracle: " + e.getMessage(), Alert.AlertType.ERROR);
             e.printStackTrace();
         }
     }
 
-    /**
-     * Despliega un cuadro de diálogo interactivo para alterar los detalles de la reservación actual.
-     * Permite al usuario modificar la fecha, hora y número de personas.
-     * Valida que no se ingresen fechas pasadas antes de enviar la actualización a la base de datos.
-     * * @param event El evento desencadenado al presionar el botón "Modificar".
-     */
     @FXML
     void clicModificar(ActionEvent event) {
         if (reservacionActual == null) return;
@@ -182,15 +160,10 @@ public class ConsultarReservacionController {
             String horaLimpia = cbNuevaHora.getValue() + ":00";
             
             Reservacion modificada = new Reservacion(
-                reservacionActual.getIdReservacion(),
-                reservacionActual.getFolioUnico(),
-                reservacionActual.getIdCliente(),
-                reservacionActual.getNombreCliente(),
-                reservacionActual.getIdMesa(), 
-                dpNuevaFecha.getValue().toString(),
-                horaLimpia,
-                spNuevasPersonas.getValue(),
-                reservacionActual.getEstado()
+                reservacionActual.getIdReservacion(), reservacionActual.getFolioUnico(),
+                reservacionActual.getIdCliente(), reservacionActual.getNombreCliente(),
+                reservacionActual.getIdMesa(), dpNuevaFecha.getValue().toString(),
+                horaLimpia, spNuevasPersonas.getValue(), reservacionActual.getEstado()
             );
 
             try {
@@ -204,12 +177,6 @@ public class ConsultarReservacionController {
         }
     }
 
-    /**
-     * Inicia el proceso de cancelación de la reservación actual.
-     * Solicita confirmación al usuario y, de ser aprobada, marca la reservación como 'Cancelada'
-     * y ejecuta un UPDATE adicional para liberar físicamente la mesa asignada.
-     * * @param event El evento desencadenado al presionar el botón "Cancelar".
-     */
     @FXML
     void clicCancelar(ActionEvent event) {
         if (reservacionActual == null) return;
@@ -217,18 +184,16 @@ public class ConsultarReservacionController {
         Alert conf = new Alert(Alert.AlertType.CONFIRMATION);
         conf.setTitle("Confirmar Cancelación");
         conf.setHeaderText("Estás a punto de cancelar la reserva");
-        conf.setContentText("¿Seguro que quieres cancelar y liberar la Mesa " + reservacionActual.getIdMesa() + "?");
+        conf.setContentText("¿Seguro que quieres cancelar la Mesa " + reservacionActual.getIdMesa() + "?");
         
         if (conf.showAndWait().get() == ButtonType.OK) {
             try {
                 if (dao.cancelarReservacion(reservacionActual.getIdReservacion())) {
-                    
-                    try (Connection con = ConexionBD.conectar();
+                    try (Connection con = OracleConnect.getConexion();
                          PreparedStatement ps = con.prepareStatement("UPDATE mesa SET estado = 'Libre' WHERE idMesa = ?")) {
                         ps.setInt(1, reservacionActual.getIdMesa());
                         ps.executeUpdate();
                     }
-
                     mostrarAlerta("Cancelada", "Reservación cancelada y mesa liberada con éxito.", Alert.AlertType.INFORMATION);
                     clicBuscar(null); 
                 }
@@ -239,10 +204,6 @@ public class ConsultarReservacionController {
         }
     }
 
-    /**
-     * Reinicia las etiquetas de información visual en la interfaz y bloquea los botones 
-     * de acción cuando no existe una reservación activa en memoria.
-     */
     private void limpiarCampos() {
         reservacionActual = null;
         lblCliente.setText("---");
@@ -255,12 +216,6 @@ public class ConsultarReservacionController {
         btnCancelar.setDisable(true);
     }
 
-    /**
-     * Muestra un cuadro de diálogo dinámico según el tipo de alerta requerida.
-     * * @param titulo  Título de la ventana.
-     * @param mensaje Cuerpo del aviso.
-     * @param tipo    El tipo de icono y formato de la alerta (Ej. WARNING, ERROR, INFORMATION).
-     */
     private void mostrarAlerta(String titulo, String mensaje, Alert.AlertType tipo) {
         Alert alerta = new Alert(tipo);
         alerta.setTitle(titulo);

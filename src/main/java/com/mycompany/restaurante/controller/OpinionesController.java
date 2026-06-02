@@ -19,6 +19,11 @@ import java.net.URL;
 import java.util.Date;
 import java.util.List;
 import java.util.ResourceBundle;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
 
 public class OpinionesController implements Initializable {
 
@@ -164,7 +169,7 @@ public class OpinionesController implements Initializable {
                 mostrarAlerta("Error de Registro", "La base NoSQL rechazó el documento.", Alert.AlertType.ERROR);
             }
         } catch (Exception ex) {
-            System.err.println("❌ EXCEPCIÓN EN MONGO: " + ex.getMessage());
+            System.err.println("EXCEPCIÓN EN MONGO: " + ex.getMessage());
             mostrarAlerta("Error de Servidor NoSQL", "No hay comunicación con MongoDB.", Alert.AlertType.ERROR);
             ex.printStackTrace();
         }
@@ -261,7 +266,7 @@ public class OpinionesController implements Initializable {
                 VboxTarjetas.getChildren().add(tarjeta);
             }
         } catch (Exception ex) {
-            System.err.println("❌ Excepción al renderizar el feed derecho: " + ex.getMessage());
+            System.err.println("Excepción al renderizar el feed derecho: " + ex.getMessage());
         }
     }
 
@@ -327,19 +332,30 @@ public class OpinionesController implements Initializable {
         alerta.showAndWait();
     }
 
-// =========================================================================
-    // 🚪 NAVEGACIÓN Y SALIDA A VER MENU CLIENTE (CORREGIDO)
-    // =========================================================================
-    @FXML
-    private void volverDashboard(ActionEvent event) {
-        try {
-            // Mandamos a llamar la raíz de tu App con el nombre exacto de tu archivo FXML
-            com.mycompany.restaurante.App.setRoot("VerMenuCliente");
-        } catch (IOException e) {
-            System.err.println("❌ Error crítico al regresar a VerMenuCliente: " + e.getMessage());
-            e.printStackTrace();
-        }
+@FXML
+private void volverDashboard(ActionEvent event) {
+    try {
+        // 1. Obtener la referencia al Stage actual
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        
+        // 2. Cargar el FXML de forma explícita
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/VerMenuCliente.fxml"));
+        Parent root = loader.load();
+        
+        // 3. Cambiar la escena y mostrar
+        Scene scene = new Scene(root);
+        stage.setScene(scene);
+        stage.setTitle("Menú Cliente");
+        stage.show();
+        
+    } catch (IOException e) {
+        // Imprimir el error real en la consola
+        System.err.println("ERROR: No se pudo cargar el FXML. Revisa la ruta.");
+        e.printStackTrace(); 
+    } catch (NullPointerException e) {
+        System.err.println("ERROR: El archivo FXML no se encuentra en /fxml/VerMenuCliente.fxml");
     }
+}
 
     @FXML private void mostrarComentarios(ActionEvent event) { mostrarComentarios(); }
     @FXML private void mostrarQuejas(ActionEvent event) { mostrarQuejas(); }

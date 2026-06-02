@@ -1,31 +1,22 @@
 package com.mycompany.restaurante.dao;
 
 import com.mycompany.restaurante.modelo.pojo.Pago;
+import com.mycompany.restaurante.modelo.sql.OracleConnect; // Cambio a la conexión de Oracle Cloud
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 /**
  * Clase de Acceso a Datos (DAO) para el procesamiento de pagos.
- * Implementa lógica transaccional crítica para asegurar que el registro de ingresos,
- * la actualización de estados de pedidos y la liberación de mesas físicas 
- * ocurran de manera síncrona y atómica.
- * * @author Ricardo, Diego, Angel, Stephy
+ * Implementa lógica transaccional para Oracle Cloud.
  */
 public class PagoDAO {
 
     /**
-     * Registra un pago de cliente y ejecuta las actualizaciones de estado correspondientes.
-     * Esta operación utiliza transacciones manuales (AutoCommit = false) para garantizar
-     * que el sistema mantenga la integridad referencial. Si alguna de las tres operaciones 
-     * SQL falla, se ejecuta un 'rollback' para revertir cualquier cambio parcial.
-     * * Pasos de la transacción:
-     * 1. Inserta el registro del pago en la tabla 'pagos'.
-     * 2. Actualiza el estado del pedido asociado a 'Pagado'.
-     * 3. Libera la mesa correspondiente cambiando su estado a 'Libre'.
-     * * * @param pago Objeto con los detalles del pago (monto, método, ID pedido).
-     * @param idMesa Identificador físico de la mesa que se liberará.
-     * @return true si la transacción completa fue exitosa, false si hubo un error.
+     * Registra un pago y libera la mesa mediante una transacción atómica.
+     * @param pago Objeto con los detalles del pago.
+     * @param idMesa Identificador físico de la mesa.
+     * @return true si la transacción fue exitosa.
      */
     public boolean registrarPago(Pago pago, int idMesa) {
         String sqlPago = "INSERT INTO pagos (total, metodoPago, idPedido) VALUES (?, ?, ?)";
@@ -34,10 +25,11 @@ public class PagoDAO {
         
         Connection con = null;
         try {
-            con = com.mycompany.restaurante.utils.ConexionBD.conectar();
+            // Usamos la conexión de Oracle Cloud
+            con = OracleConnect.getConexion();
             con.setAutoCommit(false); 
 
-            // 1. Insertar el ticket de pago en la BD
+            // 1. Insertar el ticket de pago
             try (PreparedStatement psPago = con.prepareStatement(sqlPago)) {
                 psPago.setDouble(1, pago.getTotal());
                 psPago.setString(2, pago.getMetodo());
@@ -45,36 +37,39 @@ public class PagoDAO {
                 psPago.executeUpdate();
             }
 
-            // 2. Cambiar el estado de la comanda a Pagado
+            // 2. Actualizar estado del pedido
             try (PreparedStatement psPedido = con.prepareStatement(sqlPedido)) {
                 psPedido.setInt(1, pago.getIdPedido());
                 psPedido.executeUpdate();
             }
 
-            // 3. Liberar la mesa para que vuelva a estar disponible
+            // 3. Liberar mesa
             try (PreparedStatement psMesa = con.prepareStatement(sqlMesa)) {
                 psMesa.setInt(1, idMesa);
                 psMesa.executeUpdate();
             }
 
             con.commit(); 
-            System.out.println(">> [PagoDAO] Transacción completada con éxito. Mesa " + idMesa + " liberada.");
+            System.out.println(">> [PagoDAO] Transacción completada en Oracle Cloud. Mesa " + idMesa + " liberada.");
             return true;
             
         } catch (SQLException e) {
             if (con != null) {
                 try { 
                     con.rollback(); 
-                    System.err.println(">> [PagoDAO] Transacción cancelada (Rollback ejecutado).");
+                    System.err.println(">> [PagoDAO] Error: Rollback ejecutado en Oracle.");
                 } catch (SQLException ex) { 
                     ex.printStackTrace(); 
                 }
             }
-            System.err.println("Error crítico en la transacción de pago: " + e.getMessage());
+            System.err.println("Error crítico en transacción de pago (Oracle): " + e.getMessage());
             return false;
         } finally {
             if (con != null) {
-                try { con.close(); } catch (SQLException e) { e.printStackTrace(); }
+                try { 
+                    con.setAutoCommit(true); // Restaurar estado normal antes de cerrar
+                    con.close(); 
+                } catch (SQLException e) { e.printStackTrace(); }
             }
         }
     }

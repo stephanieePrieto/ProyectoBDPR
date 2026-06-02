@@ -3,7 +3,7 @@ package com.mycompany.restaurante.controller;
 import com.mycompany.restaurante.App;
 import com.mycompany.restaurante.modelo.pojo.PicoActividad;
 import com.mycompany.restaurante.modelo.pojo.Usuario;
-import com.mycompany.restaurante.modelo.sql.MySQLConnect;
+import com.mycompany.restaurante.modelo.sql.OracleConnect; // Conexión a Oracle
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -52,21 +52,20 @@ public class ReportePicosController {
         LocalDate inicio = dpInicio.getValue();
         LocalDate fin = dpFin.getValue();
 
-        // ESCUDO: Validación estricta para cumplir el caso de prueba CP-CU14-02
         if (inicio == null || fin == null) {
             mostrarAlerta("Campos vacíos", "⚠️ Por favor selecciona una fecha de inicio y fin.");
-            return; // Detiene la ejecución aquí mismo
+            return;
         }
 
-        String sql = "SELECT DATE(p.fechaHora) as dia, COUNT(p.idPedido) as totalPedidos, COALESCE(SUM(pa.total), 0) as totalIngresos " +
+        // Consulta SQL ajustada a sintaxis Oracle: TRUNC para fechas y TO_DATE para parámetros
+        String sql = "SELECT TRUNC(p.fechaHora) as dia, COUNT(p.idPedido) as totalPedidos, COALESCE(SUM(pa.total), 0) as totalIngresos " +
                      "FROM pedidos p LEFT JOIN pagos pa ON p.idPedido = pa.idPedido " +
-                     "WHERE DATE(p.fechaHora) BETWEEN ? AND ? " +
-                     "GROUP BY DATE(p.fechaHora) ORDER BY totalPedidos DESC";
+                     "WHERE TRUNC(p.fechaHora) BETWEEN TO_DATE(?, 'YYYY-MM-DD') AND TO_DATE(?, 'YYYY-MM-DD') " +
+                     "GROUP BY TRUNC(p.fechaHora) ORDER BY totalPedidos DESC";
 
         listaPicos.clear();
-        MySQLConnect mysql = new MySQLConnect();
         
-        try (Connection con = mysql.connection();
+        try (Connection con = OracleConnect.getConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {
             
             ps.setString(1, inicio.toString());
@@ -75,7 +74,7 @@ public class ReportePicosController {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     listaPicos.add(new PicoActividad(
-                        rs.getString("dia"),
+                        rs.getDate("dia").toString(),
                         rs.getInt("totalPedidos"),
                         rs.getDouble("totalIngresos")
                     ));
@@ -85,16 +84,17 @@ public class ReportePicosController {
             if (!listaPicos.isEmpty()) {
                 PicoActividad topDia = listaPicos.get(0);
                 lblDiaMayorAfluencia.setText(topDia.getFecha());
-                lblPedidosMayorAfluencia.setText(topDia.getCantidadPedidos() + " Mesas");
+                lblPedidosMayorAfluencia.setText(topDia.getCantidadPedidos() + " Pedidos");
                 lblIngresosMayorAfluencia.setText(String.format("$%.2f", topDia.getIngresosTotales()));
             } else {
                 lblDiaMayorAfluencia.setText("Sin datos");
-                lblPedidosMayorAfluencia.setText("0 Mesas");
+                lblPedidosMayorAfluencia.setText("0 Pedidos");
                 lblIngresosMayorAfluencia.setText("$0.00");
             }
 
         } catch (SQLException e) {
             e.printStackTrace();
+            mostrarAlerta("Error de BD", "Fallo al consultar Oracle: " + e.getMessage());
         }
     }
 
@@ -115,7 +115,6 @@ public class ReportePicosController {
         }
     }
 
-    // MÉTODO NUEVO PARA MOSTRAR LAS ALERTAS EN PANTALLA
     private void mostrarAlerta(String titulo, String mensaje) {
         Alert alerta = new Alert(Alert.AlertType.WARNING);
         alerta.setTitle(titulo);

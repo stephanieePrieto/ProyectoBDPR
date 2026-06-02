@@ -3,13 +3,12 @@ package com.mycompany.restaurante.controller;
 import com.mycompany.restaurante.App;
 import com.mycompany.restaurante.dao.PlatilloDAO;
 import com.mycompany.restaurante.modelo.pojo.Platillo;
-import com.mycompany.restaurante.modelo.sql.MySQLConnect;
+import com.mycompany.restaurante.modelo.sql.OracleConnect; // Cambio a Oracle
 import java.io.IOException;
 import java.net.URL;
 import java.sql.Connection;
 import java.util.List;
 import java.util.ResourceBundle;
-import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -29,9 +28,8 @@ import javafx.stage.Stage;
 
 /**
  * Controlador de la interfaz gráfica del Menú Digital para Clientes.
- * Gestiona el despliegue dinámico de la carta, clasificando los productos
- * en cuadrículas independientes construidas en tiempo de ejecución.
- * * @author Ricardo, Diego, Angel, Stephy
+ * Migrado a arquitectura Oracle Cloud.
+ * @author Ricardo, Diego, Angel, Stephy
  */
 public class MenuClienteController implements Initializable {
 
@@ -41,9 +39,6 @@ public class MenuClienteController implements Initializable {
     @FXML private GridPane gridPasteles;
     @FXML private GridPane gridPizza;
 
-    /**
-     * Inicializa el estado del menú tras cargar el archivo FXML.
-     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         GridPane[] todosLosGrids = {
@@ -72,13 +67,9 @@ public class MenuClienteController implements Initializable {
         mostrarGrid("Pizzas");
     }
 
-    /**
-     * Interroga a la capa DAO para obtener los alimentos disponibles y los 
-     * distribuye en la cuadrícula correspondiente según su categoría.
-     */
     private void cargarMenuDinamico() {
-        MySQLConnect mysql = new MySQLConnect();
-        try (Connection conexion = mysql.connection()) {
+        // Conexión a Oracle
+        try (Connection conexion = OracleConnect.getConexion()) {
             if (conexion != null) {
                 PlatilloDAO dao = new PlatilloDAO(conexion);
                 List<Platillo> activos = dao.obtenerPlatillosActivos();
@@ -93,9 +84,7 @@ public class MenuClienteController implements Initializable {
                     VBox tarjeta = crearTarjetaPlatillo(p);
                     
                     int cat = p.getIdCategoria(); 
-                    if (cat < 1 || cat > 5) {
-                        cat = 1; 
-                    }
+                    if (cat < 1 || cat > 5) cat = 1;
 
                     switch (cat) {
                         case 1: 
@@ -122,15 +111,10 @@ public class MenuClienteController implements Initializable {
                 }
             }
         } catch (Exception e) {
-            System.err.println("Error al cargar menú: " + e.getMessage());
+            System.err.println("Error al cargar menú en Oracle: " + e.getMessage());
         }
     }
 
-    /**
-     * Construye un contenedor gráfico VBox personalizado para un platillo.
-     * @param p Instancia del objeto Platillo.
-     * @return El contenedor estructurado listo para la UI.
-     */
     private VBox crearTarjetaPlatillo(Platillo p) {
         VBox tarjeta = new VBox();
         tarjeta.setAlignment(Pos.CENTER);
@@ -154,22 +138,13 @@ public class MenuClienteController implements Initializable {
         
         try {
             String nombreImagen = p.getImagen();
-            if (nombreImagen == null || nombreImagen.trim().isEmpty()) {
-                nombreImagen = "default.png";
-            }
+            if (nombreImagen == null || nombreImagen.trim().isEmpty()) nombreImagen = "default.png";
             
-            String path = "/img/" + nombreImagen;
-            URL urlImg = getClass().getResource(path);
+            URL urlImg = getClass().getResource("/img/" + nombreImagen);
+            if (urlImg == null) urlImg = getClass().getResource("/img/default.png");
             
-            if (urlImg == null) {
-                urlImg = getClass().getResource("/img/default.png");
-            }
-            
-            if (urlImg != null) {
-                imgPlatillo.setImage(new Image(urlImg.toExternalForm()));
-            } else {
-                imgPlatillo.setStyle("-fx-background-color: #e0e0e0;"); 
-            }
+            if (urlImg != null) imgPlatillo.setImage(new Image(urlImg.toExternalForm()));
+            else imgPlatillo.setStyle("-fx-background-color: #e0e0e0;");
         } catch (Exception e) {
             imgPlatillo.setStyle("-fx-background-color: #e0e0e0;");
         }
@@ -185,10 +160,6 @@ public class MenuClienteController implements Initializable {
         return tarjeta;
     }
 
-    /**
-     * Alterna la visibilidad síncrona de los GridPanes según la categoría.
-     * @param cat Nombre de la sección.
-     */
     private void mostrarGrid(String cat) {
         if (gridPizza != null) gridPizza.setVisible(cat.equals("Pizzas"));
         if (gridBebidas != null) gridBebidas.setVisible(cat.equals("Bebidas"));
@@ -213,16 +184,12 @@ public class MenuClienteController implements Initializable {
         try { cambiarPantalla(event, "Login", "Iniciar Sesión - Pizzatron 3000"); } catch (IOException ex) { ex.printStackTrace(); }
     }
 
-    // =========================================================================
-    // 🟢 NUEVO: Se añade el método que exige el botón de VerMenuCliente.fxml
-    // =========================================================================
     @FXML
     private void abrirPantallaOpiniones(ActionEvent event) {
         try { 
-            // Te enruta directo a tu buzón NoSQL de MongoDB usando el método nativo
             cambiarPantalla(event, "OpinionesClientes", "Buzón de Opiniones - MongoDB NoSQL"); 
         } catch (IOException ex) { 
-            System.err.println("❌ Error crítico al abrir el buzón de opiniones: " + ex.getMessage());
+            System.err.println("Error crítico al abrir el buzón de opiniones: " + ex.getMessage());
             ex.printStackTrace(); 
         }
     }

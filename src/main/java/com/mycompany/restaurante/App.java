@@ -1,6 +1,10 @@
 package com.mycompany.restaurante;
 
 import com.mycompany.restaurante.modelo.pojo.Usuario;
+import com.mycompany.restaurante.modelo.sql.OracleConnect;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoDatabase;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -13,16 +17,37 @@ public class App extends Application {
 
     private static Scene scene;
     
-    // Este objeto mantiene la sesión de los EMPLEADOS
+    // Sesión de Empleados y Clientes
     public static Usuario usuarioLogueado; 
-    
-    // --- ESTA ES LA NUEVA VARIABLE PARA LOS CLIENTES ---
-    // Este String mantiene la sesión del PINGÜINO (ej. "CP001")
     public static String idClienteLogueado; 
+    
+    // Conexión a MongoDB estática
+    public static MongoDatabase mongoDB;
 
     @Override
     public void start(Stage stage) throws IOException {
-        // Al iniciar, limpiamos todas las sesiones
+        // 1. VERIFICACIÓN DE ORACLE
+        System.out.println("🔍 Iniciando verificación de infraestructura...");
+        try {
+            java.sql.Connection con = OracleConnect.getConexion();
+            if (con != null && !con.isClosed()) {
+                System.out.println("✅ ¡Infraestructura lista y conectada a Oracle Cloud!");
+            }
+        } catch (Exception e) {
+            System.err.println("❌ ERROR FATAL ORACLE: " + e.getMessage());
+        }
+
+        // 2. INICIALIZACIÓN DE MONGODB
+        try {
+            // Asegúrate de tener tu URI de Atlas correcta aquí
+            String uri = "mongodb+srv://<usuario>:<password>@cluster.mongodb.net/?retryWrites=true&w=majority";
+            MongoClient mongoClient = MongoClients.create(uri);
+            mongoDB = mongoClient.getDatabase("SistemaRestaurante");
+            System.out.println("✅ ¡Conectado a MongoDB Atlas!");
+        } catch (Exception e) {
+            System.err.println("❌ ERROR FATAL MONGODB: " + e.getMessage());
+        }
+
         usuarioLogueado = null; 
         idClienteLogueado = null;
         
@@ -41,7 +66,7 @@ public class App extends Application {
 
     public static FXMLLoader getFXMLLoader(String fxml) throws IOException {
         String path = "/fxml/" + fxml + ".fxml";
-       URL resource = App.class.getResource(path);
+        URL resource = App.class.getResource(path);
         if (resource == null) {
             resource = App.class.getResource(fxml + ".fxml");
         }

@@ -1,7 +1,7 @@
 package com.mycompany.restaurante.controller;
 
 import com.mycompany.restaurante.App;
-import com.mycompany.restaurante.modelo.sql.MySQLConnect;
+import com.mycompany.restaurante.modelo.sql.OracleConnect; // Conexión a Oracle Cloud
 import java.io.IOException;
 import java.net.URL;
 import java.sql.Connection;
@@ -21,28 +21,19 @@ import javafx.util.Duration;
 
 /**
  * Controlador del sistema de visualización de cocina (KDS).
- * Administra el despliegue dinámico de comandas activas, implementando
- * hilos de refresco automático para asegurar la sincronización con los meseros.
- * * @author Ricardo, Diego, Angel, Stephy
+ * Migrado a Oracle Cloud.
+ * @author Ricardo, Diego, Angel, Stephy
  */
 public class ChefController implements Initializable {
 
     @FXML private HBox panelComandas;
 
-    /**
-     * Inicializa los componentes visuales y el hilo de actualización automática.
-     * @param url Ubicación relativa para resolver el objeto raíz.
-     * @param rb Recursos utilizados para localizar el objeto raíz.
-     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         cargarComandasActivas();
         configurarRefrescoAutomatico();   
-    }    
+    }   
 
-    /**
-     * Configura un objeto Timeline para consultar a MySQL cada 8 segundos.
-     */
     private void configurarRefrescoAutomatico() {
         Timeline temporizador = new Timeline(
                 new KeyFrame(Duration.seconds(8), event -> {
@@ -53,28 +44,19 @@ public class ChefController implements Initializable {
         temporizador.play();
     }
 
-    /**
-     * Fuerza la sincronización manual del panel de comandas.
-     * @param event Evento de acción disparado por el control UI.
-     */
     @FXML
     void clicActualizarManual(ActionEvent event) {
         cargarComandasActivas();
     }
 
-    /**
-     * Consulta las comandas en estado 'Pendiente' y reconstruye el panel visual.
-     * Monta de forma dinámica los elementos hijos de tipo TarjetaPedido.fxml.
-     */
     public void cargarComandasActivas() {
         panelComandas.getChildren().clear(); 
         
-        MySQLConnect mysql = new MySQLConnect();
-        String sqlPedidos = "SELECT idPedido, idMesa, "
-                + "DATE_FORMAT(fechaHora, '%r') as hora FROM pedidos "
-                + "WHERE estado = 'Pendiente' ORDER BY fechaHora ASC";
+        // Oracle: Usamos TO_CHAR para obtener la hora en formato de 12 horas
+        String sqlPedidos = "SELECT idPedido, idMesa, TO_CHAR(fechaHora, 'HH:MI:SS AM') as hora "
+                          + "FROM pedidos WHERE estado = 'Pendiente' ORDER BY fechaHora ASC";
         
-        try (Connection con = mysql.connection()) {
+        try (Connection con = OracleConnect.getConexion()) {
             if (con == null) return;
             
             try (PreparedStatement psPedidos = con.prepareStatement(sqlPedidos);
@@ -101,13 +83,6 @@ public class ChefController implements Initializable {
         }
     }
 
-    /**
-     * Compila y concatena el desglose de productos de un pedido.
-     * @param con Conexión activa con MySQL.
-     * @param idPedido Identificador del pedido.
-     * @return Cadena formateada con los platillos y notas.
-     * @throws SQLException Si ocurre error en la consulta.
-     */
     private String obtenerDetallesTexto(Connection con, int idPedido) throws SQLException {
         StringBuilder sb = new StringBuilder();
         String notaGeneral = "";

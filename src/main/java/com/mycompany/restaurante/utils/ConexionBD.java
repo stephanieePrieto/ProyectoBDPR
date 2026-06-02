@@ -1,10 +1,11 @@
 package com.mycompany.restaurante.utils;
 
+import com.mycompany.restaurante.modelo.sql.OracleConnect;
 import java.sql.Connection;
-import com.mycompany.restaurante.modelo.sql.MySQLConnect;
 
 public class ConexionBD {
+    // Redirigimos la llamada antigua al nuevo motor Oracle
     public static Connection conectar() {
-        return MySQLConnect.getConexion();
+        return OracleConnect.getConexion();
     }
 }

@@ -36,14 +36,14 @@
          <children>
             <ImageView fitHeight="136.0" fitWidth="114.0" pickOnBounds="true" preserveRatio="true">
                <image>
-                  <Image url="@../../../../../RestauranteBD/src/main/resources/img/opinionn.png" />
+                  <Image url="@../img/pizza%20parlor.png" />
                </image>
             </ImageView>
          </children>
       </AnchorPane>
       <ImageView fitHeight="192.0" fitWidth="401.0" layoutX="351.0" pickOnBounds="true" preserveRatio="true">
          <image>
-            <Image url="@../../../../../RestauranteBD/src/main/resources/img/opinion.png" />
+            <Image url="@../img/opinion.png" />
          </image>
       </ImageView>
       <VBox alignment="CENTER" layoutX="12.0" layoutY="218.0" prefHeight="387.0" prefWidth="186.0" spacing="5.0">
@@ -55,7 +55,7 @@
                <graphic>
                   <ImageView fitHeight="74.0" fitWidth="170.0" pickOnBounds="true" preserveRatio="true">
                      <image>
-                        <Image url="@../../../../../RestauranteBD/src/main/resources/img/opiniones.png" />
+                        <Image url="@../img/opiniones.png" />
                      </image>
                   </ImageView>
                </graphic>
@@ -69,7 +69,7 @@
                <graphic>
                   <ImageView fitHeight="74.0" fitWidth="132.0" pickOnBounds="true">
                      <image>
-                        <Image url="@../../../../../RestauranteBD/src/main/resources/img/quejas.png" />
+                        <Image url="@../img/quejas.png" />
                      </image>
                   </ImageView>
                </graphic>
@@ -83,7 +83,7 @@
                <graphic>
                   <ImageView fitHeight="74.0" fitWidth="132.0" pickOnBounds="true">
                      <image>
-                        <Image url="@../../../../../RestauranteBD/src/main/resources/img/sugerencias.png" />
+                        <Image url="@../img/sugerencias.png" />
                      </image>
                   </ImageView>
                </graphic>
@@ -107,7 +107,7 @@
                                  <graphic>
                                     <ImageView fitHeight="45.0" fitWidth="64.0" pickOnBounds="true" preserveRatio="true">
                                        <image>
-                                          <Image url="@../../../../../RestauranteBD/src/main/resources/img/enojado.png" />
+                                          <Image url="@../img/enojado.png" />
                                        </image>
                                     </ImageView>
                                  </graphic>
@@ -116,7 +116,7 @@
                                  <graphic>
                                     <ImageView fitHeight="45.0" fitWidth="64.0" pickOnBounds="true" preserveRatio="true">
                                        <image>
-                                          <Image url="@../../../../../RestauranteBD/src/main/resources/img/triste.png" />
+                                          <Image url="@../img/triste.png" />
                                        </image>
                                     </ImageView>
                                  </graphic>
@@ -125,7 +125,7 @@
                                  <graphic>
                                     <ImageView fitHeight="45.0" fitWidth="64.0" pickOnBounds="true" preserveRatio="true">
                                        <image>
-                                          <Image url="@../../../../../RestauranteBD/src/main/resources/img/serio.png" />
+                                          <Image url="@../img/serio.png" />
                                        </image>
                                     </ImageView>
                                  </graphic>
@@ -134,7 +134,7 @@
                                  <graphic>
                                     <ImageView fitHeight="45.0" fitWidth="64.0" pickOnBounds="true" preserveRatio="true">
                                        <image>
-                                          <Image url="@../../../../../RestauranteBD/src/main/resources/img/feliz.png" />
+                                          <Image url="@../img/feliz.png" />
                                        </image>
                                     </ImageView>
                                  </graphic>
@@ -143,7 +143,7 @@
                                  <graphic>
                                     <ImageView fitHeight="45.0" fitWidth="64.0" pickOnBounds="true" preserveRatio="true">
                                        <image>
-                                          <Image url="@../../../../../RestauranteBD/src/main/resources/img/encantado.png" />
+                                          <Image url="@../img/encantado.png" />
                                        </image>
                                     </ImageView>
                                  </graphic>
@@ -164,27 +164,27 @@
                         <TextArea fx:id="txtComentario" layoutX="19.0" layoutY="166.0" prefHeight="91.0" prefWidth="354.0" promptText="Cuéntanos como fue tu experiencia..." />
                         <ImageView fx:id="imgStar1" fitHeight="49.0" fitWidth="58.0" layoutX="22.0" layoutY="77.0" pickOnBounds="true" preserveRatio="true">
                            <image>
-                              <Image url="@../../../../../RestauranteBD/src/main/resources/img/estrellaVacia.png" />
+                              <Image url="@../img/estrellaVacia.png" />
                            </image>
                         </ImageView>
                         <ImageView fx:id="imgStar2" fitHeight="49.0" fitWidth="58.0" layoutX="78.0" layoutY="77.0" pickOnBounds="true" preserveRatio="true">
                            <image>
-                              <Image url="@../../../../../RestauranteBD/src/main/resources/img/estrellaVacia.png" />
+                              <Image url="@../img/estrellaVacia.png" />
                            </image>
                         </ImageView>
                         <ImageView fx:id="imgStar3" fitHeight="49.0" fitWidth="58.0" layoutX="134.0" layoutY="77.0" pickOnBounds="true" preserveRatio="true">
                            <image>
-                              <Image url="@../../../../../RestauranteBD/src/main/resources/img/estrellaVacia.png" />
+                              <Image url="@../img/estrellaVacia.png" />
                            </image>
                         </ImageView>
                         <ImageView fx:id="imgStar4" fitHeight="49.0" fitWidth="58.0" layoutX="190.0" layoutY="77.0" pickOnBounds="true" preserveRatio="true">
                            <image>
-                              <Image url="@../../../../../RestauranteBD/src/main/resources/img/estrellaVacia.png" />
+                              <Image url="@../img/estrellaVacia.png" />
                            </image>
                         </ImageView>
                         <ImageView fx:id="imgStar5" fitHeight="49.0" fitWidth="58.0" layoutX="246.0" layoutY="77.0" pickOnBounds="true" preserveRatio="true">
                            <image>
-                              <Image url="@../../../../../RestauranteBD/src/main/resources/img/estrellaVacia.png" />
+                              <Image url="@../img/estrellaVacia.png" />
                            </image>
                         </ImageView>
                         <Label layoutX="21.0" layoutY="264.0" prefHeight="20.0" prefWidth="148.0" style="-fx-text-fill: #003366;" text="¿Qué fue lo mejor?">
