@@ -10,14 +10,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- * Clase de Acceso a Datos (DAO) para la gestión del flujo de clientes en lista de espera.
+ * Clase encargada de gestionar las operaciones de base de datos para la lista de espera de clientes.
  */
 public class ListaEsperaDAO {
 
     /**
-     * Registra un nuevo comensal en la base de datos.
-     * En Oracle, los valores de ID suelen ser manejados por IDENTITY columns,
-     * por lo que no es necesario insertarlos manualmente.
+     * Registra un nuevo comensal en la lista de espera con estado inicial 'EN_ESPERA'.
+     * @param cliente Objeto ListaDeEspera con los datos del comensal.
+     * @return Verdadero si el registro fue exitoso, falso en caso contrario.
      */
     public boolean insertarClienteEspera(ListaDeEspera cliente) {
         String sql = "INSERT INTO listaespera (nombreCliente, pax, telefono, estado) VALUES (?, ?, ?, 'EN_ESPERA')";
@@ -38,7 +38,8 @@ public class ListaEsperaDAO {
     }
 
     /**
-     * Recupera a los clientes pendientes utilizando la conexión a Oracle Cloud.
+     * Obtiene una lista de los clientes que se encuentran pendientes de atención.
+     * @return Lista observable de objetos ListaDeEspera.
      */
     public ObservableList<ListaDeEspera> obtenerListaEspera() {
         ObservableList<ListaDeEspera> lista = FXCollections.observableArrayList();
@@ -66,6 +67,8 @@ public class ListaEsperaDAO {
 
     /**
      * Elimina un registro de la lista de espera.
+     * @param idEspera Identificador único del registro a eliminar.
+     * @return Verdadero si la eliminación fue exitosa, falso en caso contrario.
      */
     public boolean eliminarDeLista(int idEspera) {
         String sql = "DELETE FROM listaespera WHERE idEspera = ?";
@@ -83,9 +86,9 @@ public class ListaEsperaDAO {
     }
 
     /**
-     * Actualiza el estado a ATENDIDO 
-     * @param idEspera
-     * @return 
+     * Actualiza el estado de un cliente en la lista a 'ATENDIDO'.
+     * @param idEspera Identificador único del registro.
+     * @return Verdadero si la actualización fue exitosa, falso en caso contrario.
      */
     public boolean atenderCliente(int idEspera) {
         String sql = "UPDATE listaespera SET estado = 'ATENDIDO' WHERE idEspera = ?";

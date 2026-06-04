@@ -4,7 +4,6 @@ package com.mycompany.restaurante.modelo.pojo;
  * Clase de modelo (POJO) que representa el resultado de un análisis de ventas.
  * Esta entidad se utiliza para estructurar los datos del "Top de productos" 
  * en las pantallas de reportes y analítica del restaurante.
- * * @author Ricardo, Diego, Angel, Stephy
  */
 public class ProductoMasVendido {
     

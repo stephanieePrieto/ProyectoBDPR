@@ -7,7 +7,6 @@ import java.util.List;
  * Plain Old Java Object (POJO) que representa la entidad Pedido.
  * Almacena los atributos primordiales de una comanda mapeada con MySQL,
  * incluyendo auxiliares estructurados para renderizar celdas en las vistas.
- * * @author Ricardo, Diego, Angel, Stephy
  */
 public class Pedido {
 

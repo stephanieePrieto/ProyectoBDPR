@@ -4,7 +4,6 @@ package com.mycompany.restaurante.modelo.pojo;
  * Clase de modelo (POJO) que representa un insumo o producto en el inventario.
  * Gestiona las existencias físicas, las unidades de medida correspondientes 
  * y los umbrales de seguridad para alertas de reabastecimiento.
- * * @author Ricardo, Diego, Angel, Stephy
  */
 public class ProductoAlmacen {
     private int idProducto;

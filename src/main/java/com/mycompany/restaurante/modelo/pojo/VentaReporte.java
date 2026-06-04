@@ -4,7 +4,6 @@ package com.mycompany.restaurante.modelo.pojo;
  * Clase de modelo (POJO) para la generación de reportes financieros.
  * Agrupa los datos de ventas por periodo, facilitando la visualización de 
  * ingresos acumulados en las herramientas de analítica del sistema.
- * * @author Ricardo, Diego, Angel, Stephy
  */
 public class VentaReporte {
     

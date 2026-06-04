@@ -4,7 +4,6 @@ package com.mycompany.restaurante.modelo.pojo;
  * Clase de modelo (POJO) que representa una mesa física dentro del restaurante.
  * Esta entidad gestiona el estado operativo de la mesa y almacena una representación 
  * textual de los pedidos activos asociados, facilitando su visualización en el dashboard.
- * * @author Ricardo, Diego, Angel, Stephy
  */
 public class Mesa {
     

@@ -4,7 +4,6 @@ package com.mycompany.restaurante.modelo.pojo;
  * Clase de modelo (POJO) que representa el desglose de productos para facturación.
  * Esta entidad está estructurada para cumplir con los estándares de CFDI, 
  * incluyendo claves de catálogo de productos/servicios y unidades de medida (SAT).
- * * @author Ricardo, Diego, Angel, Stephy
  */
 public class DetalleFactura {
     

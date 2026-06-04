@@ -4,7 +4,6 @@ package com.mycompany.restaurante.modelo.pojo;
  * Clase de modelo (POJO) que representa a un usuario del sistema (empleado).
  * Encapsula las credenciales de acceso y la información de perfil, además de 
  * vincular al usuario con su rol operativo para el control de permisos.
- * * @author Ricardo, Diego, Angel, Stephy
  */
 public class Usuario {
     

@@ -4,7 +4,6 @@ package com.mycompany.restaurante.modelo.pojo;
  * Plain Old Java Object (POJO) que representa la entidad Reservación.
  * Encapsula los atributos de un apartado de mesa en el restaurante, proveyendo
  * constructores y métodos accesores requeridos por JavaFX.
- * * @author Ricardo, Diego, Angel, Stephy
  */
 public class Reservacion {
     private int idReservacion;

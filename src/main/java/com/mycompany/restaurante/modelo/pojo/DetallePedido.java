@@ -4,7 +4,6 @@ package com.mycompany.restaurante.modelo.pojo;
  * Clase de modelo (POJO) que representa una línea de detalle dentro de un pedido.
  * Actúa como contenedor de datos para mostrar los platillos individuales, sus 
  * cantidades y el costo calculado dentro de las interfaces de facturación o revisión de comandas.
- * * @author Ricardo, Diego, Angel, Stephy
  */
 public class DetallePedido {
     private String platillo;
