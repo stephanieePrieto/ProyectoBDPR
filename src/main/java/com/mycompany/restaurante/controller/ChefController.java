@@ -1,6 +1,8 @@
 package com.mycompany.restaurante.controller;
 
 import com.mycompany.restaurante.App;
+import com.mycompany.restaurante.dao.AvanzadoDAO;
+import com.mycompany.restaurante.modelo.pojo.PlatilloAvanzado;
 import com.mycompany.restaurante.modelo.sql.OracleConnect; // Conexión a Oracle Cloud
 import java.io.IOException;
 import java.net.URL;
@@ -18,6 +20,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.layout.HBox;
 import javafx.util.Duration;
+import java.sql.Statement;
 
 /**
  * Controlador del sistema de visualización de cocina (KDS).
@@ -49,39 +52,44 @@ public class ChefController implements Initializable {
         cargarComandasActivas();
     }
 
-    public void cargarComandasActivas() {
-        panelComandas.getChildren().clear(); 
+public void cargarComandasActivas() {
+    panelComandas.getChildren().clear(); 
+    
+    // CORRECCIÓN: Accedemos a los atributos dentro del objeto 'info'.
+    // Si creaste la vista 'vista_pedidos_plana', usa esa vista.
+    // Si no, accede directo al objeto:
+// Cambia la consulta a esta:
+    String sqlPedidos = "SELECT idPedido, idMesa, TO_CHAR(FECHA_HORA, 'HH:MI:SS AM') as hora "
+                  + "FROM vista_pedidos_plana "
+                  + "WHERE ESTADO = 'Pendiente' "
+                  + "ORDER BY FECHA_HORA ASC";
+    
+    try (Connection con = OracleConnect.getConexion()) {
+        if (con == null) return;
         
-        // Oracle: Usamos TO_CHAR para obtener la hora en formato de 12 horas
-        String sqlPedidos = "SELECT idPedido, idMesa, TO_CHAR(fechaHora, 'HH:MI:SS AM') as hora "
-                          + "FROM pedidos WHERE estado = 'Pendiente' ORDER BY fechaHora ASC";
-        
-        try (Connection con = OracleConnect.getConexion()) {
-            if (con == null) return;
+        try (PreparedStatement psPedidos = con.prepareStatement(sqlPedidos);
+             ResultSet rsPedidos = psPedidos.executeQuery()) {
             
-            try (PreparedStatement psPedidos = con.prepareStatement(sqlPedidos);
-                 ResultSet rsPedidos = psPedidos.executeQuery()) {
+            while (rsPedidos.next()) {
+                int idPedido = rsPedidos.getInt("idPedido");
+                int idMesa = rsPedidos.getInt("idMesa");
+                String hora = rsPedidos.getString("hora");
                 
-                while (rsPedidos.next()) {
-                    int idPedido = rsPedidos.getInt("idPedido");
-                    int idMesa = rsPedidos.getInt("idMesa");
-                    String hora = rsPedidos.getString("hora");
-                    
-                    String textoPlatillos = obtenerDetallesTexto(con, idPedido);
-                    
-                    FXMLLoader loader = App.getFXMLLoader("TarjetaPedido");
-                    Parent tarjeta = loader.load();
+                String textoPlatillos = obtenerDetallesTexto(con, idPedido);
+                
+                FXMLLoader loader = App.getFXMLLoader("TarjetaPedido");
+                Parent tarjeta = loader.load();
 
-                    TarjetaPedidoController tarjetaCtrl = loader.getController();
-                    tarjetaCtrl.configurarTarjeta(idPedido, idMesa, hora, textoPlatillos, this);
-                    
-                    panelComandas.getChildren().add(tarjeta);
-                }
+                TarjetaPedidoController tarjetaCtrl = loader.getController();
+                tarjetaCtrl.configurarTarjeta(idPedido, idMesa, hora, textoPlatillos, this);
+                
+                panelComandas.getChildren().add(tarjeta);
             }
-        } catch (SQLException | IOException e) {
-            e.printStackTrace();
         }
+    } catch (SQLException | IOException e) {
+        e.printStackTrace();
     }
+}
 
     private String obtenerDetallesTexto(Connection con, int idPedido) throws SQLException {
         StringBuilder sb = new StringBuilder();
@@ -117,4 +125,62 @@ public class ChefController implements Initializable {
         }
         return sb.toString();
     }
+
+@FXML
+private void clicVerConsolaAvanzada(ActionEvent event) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("--- DIAGNÓSTICO POST-RELACIONAL ---\n\n");
+    
+    try (Connection con = OracleConnect.getConexion()) {
+        AvanzadoDAO avDao = new AvanzadoDAO(con);
+        
+        // 1. Mostrar Herencia
+        sb.append("1. Pizzas con Herencia (Pizza_T):\n");
+        for(PlatilloAvanzado p : avDao.obtenerPizzasAvanzadas()) {
+            sb.append("- ").append(p.getNombre()).append(" | Masa: ").append(p.getTipoMasa()).append("\n");
+        }
+        
+// 2. Mostrar Coordenadas de Mesas (Tipo objeto coordenadas_typ)
+sb.append("\n2. Ubicación de Mesas (coordenadas_typ):\n");
+// Consulta solo el objeto, no intentes acceder a sus campos internos en el SQL
+String sqlMesas = "SELECT numero, posicion FROM mesa"; 
+
+try(java.sql.Statement st = con.createStatement(); ResultSet rs = st.executeQuery(sqlMesas)) {
+    while(rs.next()){
+        int numero = rs.getInt("numero");
+        
+        // Extraemos la columna como un objeto 'Struct'
+        java.sql.Struct objPosicion = (java.sql.Struct) rs.getObject("posicion");
+        
+        if (objPosicion != null) {
+            Object[] atributos = objPosicion.getAttributes();
+            // Asumiendo que el orden en coordenadas_typ es: 1. mapa_x, 2. mapa_y
+            // Los valores suelen venir como BigDecimal
+            int x = ((java.math.BigDecimal) atributos[0]).intValue();
+            int y = ((java.math.BigDecimal) atributos[1]).intValue();
+            
+            sb.append("Mesa #").append(numero)
+              .append(" (X:").append(x).append(", Y:").append(y).append(")\n");
+        } else {
+            sb.append("Mesa #").append(numero).append(" (Sin coordenadas)\n");
+        }
+    }
+}
+        
+        mostrarAlertaExito("Consola Avanzada Oracle", sb.toString());
+        
+    } catch (SQLException e) {
+        mostrarAlerta("Error", "Fallo al consultar estructuras avanzadas: " + e.getMessage());
+    }
+}
+
+private void mostrarAlerta(String t, String m) {
+    javafx.scene.control.Alert a = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING);
+    a.setTitle(t); a.setHeaderText(null); a.setContentText(m); a.showAndWait();
+}
+
+private void mostrarAlertaExito(String t, String m) {
+    javafx.scene.control.Alert a = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
+    a.setTitle(t); a.setHeaderText(null); a.setContentText(m); a.showAndWait();
+}
 }

@@ -6,28 +6,29 @@ import com.mycompany.restaurante.modelo.pojo.Opinion;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
+import javafx.stage.Stage;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Date;
 import java.util.List;
 import java.util.ResourceBundle;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.stage.Stage;
+import java.util.UUID;
 
 public class OpinionesController implements Initializable {
 
     private final OpinionDAO opinionDAO = new OpinionDAO();
+    private final String idSesionUsuario = UUID.randomUUID().toString();
     
     private int estrellasSeleccionadas = 0;
     private String emojiSeleccionado = "serio"; 
@@ -39,31 +40,15 @@ public class OpinionesController implements Initializable {
 
     @FXML private Button btnComentarios, btnQuejas, btnSugerencias, btnVolver;
     @FXML private Pane paneComentarios, paneQuejas, paneSugerencias;
-    
-    // Formulario Comentarios
-    @FXML private TextArea txtComentario;
-    @FXML private ComboBox<String> cbMejorAspecto;
-    @FXML private Button btnEnviarComentario;
+    @FXML private TextArea txtComentario, txtQueja, txtSugerencia;
+    @FXML private ComboBox<String> cbMejorAspecto, cbTipoProblema, cbCategoria;
     @FXML private ImageView imgStar1, imgStar2, imgStar3, imgStar4, imgStar5;
     @FXML private Button btnEmojiEnojado, btnEmojiTriste, btnEmojiNeutral, btnEmojiSerio, btnEmojiFeliz, btnEmojiFan;
-    
-    // Formulario Quejas
-    @FXML private ComboBox<String> cbTipoProblema;
-    @FXML private TextArea txtQueja;
-    @FXML private Button btnBaja, btnMedia, btnAlta, btnEnviarQueja;
-    
-    // Formulario Sugerencias
-    @FXML private ComboBox<String> cbCategoria;
-    @FXML private TextArea txtSugerencia;
-    @FXML private Button btnSi, btnNo, btnAlgunDia, btnEnviarSugerencia;
-    
-    // Feed Histórico Derecho
+    @FXML private Button btnBaja, btnMedia, btnAlta, btnSi, btnNo, btnAlgunDia;
     @FXML private VBox VboxTarjetas;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        mostrarComentarios();
-        
         cbMejorAspecto.setItems(FXCollections.observableArrayList("Pizza", "Servicio", "Ambiente", "Rapidez", "Música"));
         cbTipoProblema.setItems(FXCollections.observableArrayList("Atención lenta", "Pedido incorrecto", "Comida fría", "Mal servicio", "Problema con mesa", "Cobro incorrecto", "Otro"));
         cbCategoria.setItems(FXCollections.observableArrayList("Menú", "Decoración", "Música", "Atención", "Nuevos sabores", "Promociones", "Aplicación"));
@@ -72,28 +57,108 @@ public class OpinionesController implements Initializable {
         configurarBotonesEmojis();
         configurarBotonesGravedad();
         configurarBotonesUrgencia();
-
-        cargarFeedOpiniones();
+        mostrarComentarios(); 
     }
 
+    // --- NAVEGACIÓN Y FILTRADO ---
+    @FXML private void mostrarComentarios(ActionEvent event) { mostrarComentarios(); }
     private void mostrarComentarios() {
-        paneComentarios.setVisible(true); paneComentarios.setManaged(true);
-        paneQuejas.setVisible(false); paneQuejas.setManaged(false);
-        paneSugerencias.setVisible(false); paneSugerencias.setManaged(false);
+        cambiarPanel(paneComentarios, paneQuejas, paneSugerencias);
+        cargarFeedOpiniones("Comentario");
     }
 
+    @FXML private void mostrarQuejas(ActionEvent event) { mostrarQuejas(); }
     private void mostrarQuejas() {
-        paneComentarios.setVisible(false); paneComentarios.setManaged(false);
-        paneQuejas.setVisible(true); paneQuejas.setManaged(true);
-        paneSugerencias.setVisible(false); paneSugerencias.setManaged(false);
+        cambiarPanel(paneQuejas, paneComentarios, paneSugerencias);
+        cargarFeedOpiniones("Queja");
     }
 
+    @FXML private void mostrarSugerencias(ActionEvent event) { mostrarSugerencias(); }
     private void mostrarSugerencias() {
-        paneComentarios.setVisible(false); paneComentarios.setManaged(false);
-        paneQuejas.setVisible(false); paneQuejas.setManaged(false);
-        paneSugerencias.setVisible(true); paneSugerencias.setManaged(true);
+        cambiarPanel(paneSugerencias, paneComentarios, paneQuejas);
+        cargarFeedOpiniones("Sugerencia");
     }
-    
+
+    private void cambiarPanel(Pane v, Pane h1, Pane h2) {
+        v.setVisible(true); v.setManaged(true);
+        h1.setVisible(false); h1.setManaged(false);
+        h2.setVisible(false); h2.setManaged(false);
+    }
+
+private void cargarFeedOpiniones(String filtro) {
+        VboxTarjetas.getChildren().clear();
+        try {
+            List<Opinion> historial = opinionDAO.obtainAllOpiniones();
+            if (historial == null) return;
+            
+            for (Opinion o : historial) {
+                if (filtro != null && !o.getTipo().equals(filtro)) continue;
+
+                VBox tarjeta = new VBox(6); // Mismo espaciado
+                tarjeta.setPrefWidth(370);
+                tarjeta.setMaxWidth(370);
+                tarjeta.setPadding(new Insets(12)); // Tu padding original
+
+                // Estilo conservado exactamente como lo tenías
+                String estiloComun = "-fx-border-width: 3; -fx-border-radius: 15; -fx-background-radius: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 6, 0, 0, 3);";
+                if (o.getTipo().equals("Comentario")) tarjeta.setStyle(estiloComun + "-fx-background-color: #E8F5E9; -fx-border-color: #81C784;");
+                else if (o.getTipo().equals("Queja")) tarjeta.setStyle(estiloComun + "-fx-background-color: #FFEBEE; -fx-border-color: #E57373;");
+                else tarjeta.setStyle(estiloComun + "-fx-background-color: #E3F2FD; -fx-border-color: #64B5F6;");
+
+                // 1. Encabezado (Arriba)
+                Label lblEncabezado = new Label("👤 " + o.getTipo().toUpperCase() + " - Anónimo");
+                lblEncabezado.setStyle("-fx-font-weight: bold; -fx-text-fill: #003366; -fx-font-size: 13px;");
+
+                // 2. Cuerpo (En medio)
+                Label lblCuerpo = new Label("💬 \"" + o.getContenido() + "\"");
+                lblCuerpo.setWrapText(true);
+                lblCuerpo.setStyle("-fx-text-fill: #37474F; -fx-font-size: 12px;");
+
+                // 3. Botones (Abajo, solo si es dueño)
+                HBox botones = new HBox(10);
+                botones.setAlignment(Pos.CENTER_RIGHT);
+
+                if (o.getIdSesion() != null && o.getIdSesion().equals(idSesionUsuario)) {
+                    Button btnEditar = crearBoton("Editar", "#FFD54F", e -> abrirDialogoEdicion(o, filtro));
+                    Button btnEliminar = crearBoton("Borrar", "#E57373", e -> { opinionDAO.eliminarOpinion(o.getId()); cargarFeedOpiniones(filtro); });
+                    botones.getChildren().addAll(btnEditar, btnEliminar);
+                }
+
+                // ORDEN FINAL QUE MANTIENE TU DISEÑO
+                tarjeta.getChildren().addAll(lblEncabezado, lblCuerpo, botones);
+                VboxTarjetas.getChildren().add(tarjeta);
+            
+            }
+        } catch (Exception ex) { ex.printStackTrace(); }
+    }
+
+private Button crearBoton(String t, String c, javafx.event.EventHandler<ActionEvent> a) {
+        Button b = new Button(t);
+        b.setStyle("-fx-background-color: " + c + "; -fx-background-radius: 10; -fx-cursor: hand;");
+        b.setOnAction(a);
+        return b;
+    }
+
+    private void abrirDialogoEdicion(Opinion o, String filtro) {
+        TextInputDialog dialog = new TextInputDialog(o.getContenido());
+        dialog.setTitle("Editar"); dialog.setHeaderText("Modificar opinión:");
+        dialog.setContentText("Nuevo texto:");
+        dialog.showAndWait().ifPresent(nuevoTexto -> {
+            if (opinionDAO.actualizarOpinion(o.getId(), nuevoTexto)) cargarFeedOpiniones(filtro);
+        });
+    }
+
+    private void procesarGuardado(Opinion op) {
+        op.setFechaHora(new Date());
+        op.setCliente("Anónimo");
+        op.setIdSesion(idSesionUsuario); // Guarda la sesión
+        if (opinionDAO.registrarOpinion(op)) {
+            mostrarAlerta("Éxito", "Enviado con éxito", Alert.AlertType.INFORMATION);
+            limpiarCampos();
+            cargarFeedOpiniones(op.getTipo());
+        }
+    }
+
     @FXML
     private void clicEnviarComentario(ActionEvent event) {
         if (txtComentario.getText() == null || txtComentario.getText().trim().isEmpty()) {
@@ -134,7 +199,7 @@ public class OpinionesController implements Initializable {
 
         procesarGuardado(op);
     }
-
+    
     @FXML
     private void clicEnviarSugerencia(ActionEvent event) {
         if (cbCategoria.getValue() == null) {
@@ -153,121 +218,6 @@ public class OpinionesController implements Initializable {
         op.setVerloPronto(verloProntoSeleccionado);
 
         procesarGuardado(op);
-    }
-
-    private void procesarGuardado(Opinion op) {
-        op.setFechaHora(new Date());
-        op.setCliente("Anónimo"); // 🟢 Eliminada la línea de idMesa por completo
-
-        try {
-            boolean exito = opinionDAO.registrarOpinion(op);
-            if (exito) {
-                mostrarAlerta("¡Muchas Gracias!", "Tu " + op.getTipo() + " ha sido enviado de forma anónima con éxito.", Alert.AlertType.INFORMATION);
-                limpiarCampos();
-                cargarFeedOpiniones(); 
-            } else {
-                mostrarAlerta("Error de Registro", "La base NoSQL rechazó el documento.", Alert.AlertType.ERROR);
-            }
-        } catch (Exception ex) {
-            System.err.println("EXCEPCIÓN EN MONGO: " + ex.getMessage());
-            mostrarAlerta("Error de Servidor NoSQL", "No hay comunicación con MongoDB.", Alert.AlertType.ERROR);
-            ex.printStackTrace();
-        }
-    }
-
-    private void cargarFeedOpiniones() {
-        VboxTarjetas.getChildren().clear();
-        VboxTarjetas.setSpacing(15); 
-
-        try {
-            List<Opinion> historial = opinionDAO.obtainAllOpiniones(); // Nota: Asegúrate que tu DAO mantenga el nombre del método (obtenerTodasLasOpiniones)
-            if (historial == null) return;
-            
-            for (Opinion o : historial) {
-                VBox tarjeta = new VBox();
-                tarjeta.setSpacing(6);
-                tarjeta.setPrefWidth(370);
-                tarjeta.setMaxWidth(370);
-                
-                String estiloComun = "-fx-padding: 12; -fx-border-width: 3; -fx-border-radius: 15; -fx-background-radius: 15; "
-                                   + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 6, 0, 0, 3);";
-                
-                if (o.getTipo().equals("Comentario")) {
-                    tarjeta.setStyle(estiloComun + "-fx-background-color: #E8F5E9; -fx-border-color: #81C784;"); 
-                } else if (o.getTipo().equals("Queja")) {
-                    tarjeta.setStyle(estiloComun + "-fx-background-color: #FFEBEE; -fx-border-color: #E57373;"); 
-                } else if (o.getTipo().equals("Sugerencia")) {
-                    tarjeta.setStyle(estiloComun + "-fx-background-color: #E3F2FD; -fx-border-color: #64B5F6;"); 
-                }
-
-                // 🟢 CORREGIDO: Ya no se concatena la mesa aquí, queda limpio y directo
-                Label lblEncabezado = new Label("👤 " + o.getTipo().toUpperCase() + " - Anónimo");
-                lblEncabezado.setStyle("-fx-font-weight: bold; -fx-text-fill: #003366; -fx-font-size: 13px;");
-                tarjeta.getChildren().add(lblEncabezado);
-
-                HBox filaDetalles = new HBox();
-                filaDetalles.setSpacing(8);
-                filaDetalles.setAlignment(Pos.CENTER_LEFT);
-
-                if (o.getTipo().equals("Comentario")) {
-                    Label lblEstrellas = new Label("⭐ " + o.getCalificacionEstrellas() + "/5");
-                    lblEstrellas.setStyle("-fx-font-weight: bold; -fx-text-fill: #FFA000; -fx-font-size: 12px;");
-                    filaDetalles.getChildren().add(lblEstrellas);
-                    
-                    if (o.getEmojiFinal() != null && !o.getEmojiFinal().equals("Ninguno")) {
-                        try {
-                            ImageView imgEmoji = new ImageView();
-                            imgEmoji.setFitHeight(22);
-                            imgEmoji.setFitWidth(22);
-                            imgEmoji.setPreserveRatio(true);
-                            String pathEmoji = "/img/" + o.getEmojiFinal().toLowerCase() + ".png";
-                            URL urlImg = getClass().getResource(pathEmoji);
-                            if (urlImg != null) {
-                                imgEmoji.setImage(new Image(urlImg.toExternalForm()));
-                                filaDetalles.getChildren().add(imgEmoji);
-                            }
-                        } catch (Exception ex) {}
-                    }
-                    
-                    Label lblAspecto = new Label("• Mejor: " + o.getMejorAspecto());
-                    lblAspecto.setStyle("-fx-text-fill: #555555; -fx-font-style: italic; -fx-font-size: 11px;");
-                    filaDetalles.getChildren().add(lblAspecto);
-
-                } else if (o.getTipo().equals("Queja")) {
-                    Label lblGravedad = new Label("🚨 " + o.getGravedad().toUpperCase());
-                    if (o.getGravedad().equalsIgnoreCase("Alta")) {
-                        lblGravedad.setStyle("-fx-background-color: #D32F2F; -fx-text-fill: white; -fx-padding: 1 5 1 5; -fx-background-radius: 4; -fx-font-weight: bold; -fx-font-size: 11px;");
-                    } else if (o.getGravedad().equalsIgnoreCase("Media")) {
-                        lblGravedad.setStyle("-fx-background-color: #F57C00; -fx-text-fill: white; -fx-padding: 1 5 1 5; -fx-background-radius: 4; -fx-font-weight: bold; -fx-font-size: 11px;");
-                    } else {
-                        lblGravedad.setStyle("-fx-background-color: #388E3C; -fx-text-fill: white; -fx-padding: 1 5 1 5; -fx-background-radius: 4; -fx-font-weight: bold; -fx-font-size: 11px;");
-                    }
-                    
-                    Label lblAsunto = new Label("• " + o.getTipoProblema());
-                    lblAsunto.setStyle("-fx-text-fill: #555555; -fx-font-size: 11px;");
-                    filaDetalles.getChildren().addAll(lblGravedad, lblAsunto);
-
-                } else if (o.getTipo().equals("Sugerencia")) {
-                    Label lblUrge = new Label("⏱️ Ver pronto: " + o.getVerloPronto());
-                    lblUrge.setStyle("-fx-font-weight: bold; -fx-text-fill: #1976D2; -fx-font-size: 11px;");
-                    
-                    Label lblCat = new Label("• Sección: " + o.getCategoriaSugerencia());
-                    lblCat.setStyle("-fx-text-fill: #555555; -fx-font-size: 11px;");
-                    filaDetalles.getChildren().addAll(lblUrge, lblCat);
-                }
-
-                tarjeta.getChildren().add(filaDetalles);
-
-                Label lblCuerpo = new Label("💬 \"" + o.getContenido() + "\"");
-                lblCuerpo.setWrapText(true);
-                lblCuerpo.setStyle("-fx-text-fill: #37474F; -fx-font-size: 12px; -fx-padding: 4 0 0 0;");
-                tarjeta.getChildren().add(lblCuerpo);
-
-                VboxTarjetas.getChildren().add(tarjeta);
-            }
-        } catch (Exception ex) {
-            System.err.println("Excepción al renderizar el feed derecho: " + ex.getMessage());
-        }
     }
 
     private void configurarEstrellas() {
@@ -332,32 +282,14 @@ public class OpinionesController implements Initializable {
         alerta.showAndWait();
     }
 
-@FXML
-private void volverDashboard(ActionEvent event) {
-    try {
-        // 1. Obtener la referencia al Stage actual
-        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        
-        // 2. Cargar el FXML de forma explícita
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/VerMenuCliente.fxml"));
-        Parent root = loader.load();
-        
-        // 3. Cambiar la escena y mostrar
-        Scene scene = new Scene(root);
-        stage.setScene(scene);
-        stage.setTitle("Menú Cliente");
-        stage.show();
-        
-    } catch (IOException e) {
-        // Imprimir el error real en la consola
-        System.err.println("ERROR: No se pudo cargar el FXML. Revisa la ruta.");
-        e.printStackTrace(); 
-    } catch (NullPointerException e) {
-        System.err.println("ERROR: El archivo FXML no se encuentra en /fxml/VerMenuCliente.fxml");
+    @FXML
+    private void volverDashboard(ActionEvent event) {
+        try {
+            Stage s = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            Parent r = new FXMLLoader(getClass().getResource("/fxml/VerMenuCliente.fxml")).load();
+            s.setScene(new Scene(r)); s.show();
+        } catch (IOException e) { e.printStackTrace(); }
     }
 }
 
-    @FXML private void mostrarComentarios(ActionEvent event) { mostrarComentarios(); }
-    @FXML private void mostrarQuejas(ActionEvent event) { mostrarQuejas(); }
-    @FXML private void mostrarSugerencias(ActionEvent event) { mostrarSugerencias(); }
-}
+

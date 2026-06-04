@@ -6,6 +6,9 @@ import com.mycompany.restaurante.modelo.pojo.Opinion;
 import com.mycompany.restaurante.modelo.sql.MongoConnect;
 import java.util.ArrayList;
 import java.util.List;
+import com.mongodb.client.model.Filters; // Importante añadir este import
+import org.bson.types.ObjectId;
+import com.mongodb.client.model.Updates;
 
 public class OpinionDAO {
 
@@ -38,4 +41,32 @@ public class OpinionDAO {
         }
         return lista;
     }
+    
+
+public boolean eliminarOpinion(ObjectId id) {
+    try {
+        var resultado = getColeccion().deleteOne(Filters.eq("_id", id));
+        return resultado.getDeletedCount() > 0;
+    } catch (Exception e) {
+        System.err.println("❌ Error al eliminar en MongoDB: " + e.getMessage());
+        return false;
+    }
+}
+
+
+
+public boolean actualizarOpinion(ObjectId id, String nuevoContenido) {
+    try {
+        // Actualiza el campo 'contenido' del documento que coincida con el id
+        var resultado = getColeccion().updateOne(
+            Filters.eq("_id", id), 
+            Updates.set("contenido", nuevoContenido)
+        );
+        return resultado.getModifiedCount() > 0;
+    } catch (Exception e) {
+        System.err.println("❌ Error al actualizar en MongoDB: " + e.getMessage());
+        return false;
+    }
+}
+
 }

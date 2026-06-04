@@ -115,30 +115,44 @@ public class ReservacionDAO {
         return nuevoId;
     }
 
-    public boolean insertarReservacion(Reservacion r) throws SQLException {
-        verificarConexion();
-        String idRealCliente = obtenerOGenerarIdCliente(r.getNombreCliente());
-        String sql = "INSERT INTO reservaciones (folioUnico, id_cliente, idMesa, fecha, hora, num_personas, estado) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
-            ps.setString(1, r.getFolioUnico()); ps.setString(2, idRealCliente);
-            ps.setInt(3, r.getIdMesa()); ps.setString(4, r.getFecha());
-            ps.setString(5, r.getHora()); ps.setInt(6, r.getNumPersonas());
-            ps.setString(7, r.getEstado());
-            return ps.executeUpdate() > 0;
-        }
+public boolean insertarReservacion(Reservacion r) throws SQLException {
+    verificarConexion();
+    String idRealCliente = obtenerOGenerarIdCliente(r.getNombreCliente());
+    
+    // Cambiamos el '?' de la fecha por TO_DATE(?, 'YYYY-MM-DD')
+    String sql = "INSERT INTO reservaciones (folioUnico, id_cliente, idMesa, fecha, hora, num_personas, estado) " +
+                 "VALUES (?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), ?, ?, ?)";
+    
+    try (PreparedStatement ps = conexion.prepareStatement(sql)) {
+        ps.setString(1, r.getFolioUnico()); 
+        ps.setString(2, idRealCliente);
+        ps.setInt(3, r.getIdMesa()); 
+        ps.setString(4, r.getFecha()); // Aquí envías tu String "YYYY-MM-DD"
+        ps.setString(5, r.getHora()); 
+        ps.setInt(6, r.getNumPersonas());
+        ps.setString(7, r.getEstado());
+        return ps.executeUpdate() > 0;
     }
+}
 
-    public boolean actualizarReservacion(Reservacion r) throws SQLException {
-        verificarConexion();
-        String idRealCliente = obtenerOGenerarIdCliente(r.getNombreCliente());
-        String sql = "UPDATE reservaciones SET id_cliente = ?, idMesa = ?, fecha = ?, hora = ?, num_personas = ? WHERE idReservacion = ?";
-        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
-            ps.setString(1, idRealCliente); ps.setInt(2, r.getIdMesa());
-            ps.setString(3, r.getFecha()); ps.setString(4, r.getHora());
-            ps.setInt(5, r.getNumPersonas()); ps.setInt(6, r.getIdReservacion());
-            return ps.executeUpdate() > 0;
-        }
+public boolean actualizarReservacion(Reservacion r) throws SQLException {
+    verificarConexion();
+    String idRealCliente = obtenerOGenerarIdCliente(r.getNombreCliente());
+    
+    // Agregamos TO_DATE aquí también
+    String sql = "UPDATE reservaciones SET id_cliente = ?, idMesa = ?, fecha = TO_DATE(?, 'YYYY-MM-DD'), hora = ?, num_personas = ? " +
+                 "WHERE idReservacion = ?";
+    
+    try (PreparedStatement ps = conexion.prepareStatement(sql)) {
+        ps.setString(1, idRealCliente); 
+        ps.setInt(2, r.getIdMesa());
+        ps.setString(3, r.getFecha()); // Tu fecha en formato YYYY-MM-DD
+        ps.setString(4, r.getHora());
+        ps.setInt(5, r.getNumPersonas()); 
+        ps.setInt(6, r.getIdReservacion());
+        return ps.executeUpdate() > 0;
     }
+}
 
     public boolean cancelarReservacion(int idReservacion) throws SQLException {
         verificarConexion();

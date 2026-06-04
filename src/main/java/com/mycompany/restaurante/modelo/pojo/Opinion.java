@@ -9,6 +9,8 @@ public class Opinion {
     private Date fechaHora;
     private String tipo; // "Comentario", "Queja", "Sugerencia"
     private String contenido;
+    // Identificador único para esta sesión de usuario
+    private String idSesion;
 
     // Específicos de Comentarios
     private Integer calificacionEstrellas;
@@ -49,4 +51,15 @@ public class Opinion {
     public void setCategoriaSugerencia(String categoriaSugerencia) { this.categoriaSugerencia = categoriaSugerencia; }
     public String getVerloPronto() { return verloPronto; }
     public void setVerloPronto(String verloPronto) { this.verloPronto = verloPronto; }
+
+    public String getIdSesion() {
+        return idSesion;
+    }
+
+    public void setIdSesion(String idSesion) {
+        this.idSesion = idSesion;
+    }
+
+
+    
 }

@@ -47,24 +47,26 @@ public class ReportePicosController {
         tblPicos.setItems(listaPicos);
     }
 
-    @FXML
+@FXML
     private void clicGenerarReporte(ActionEvent event) {
         LocalDate inicio = dpInicio.getValue();
         LocalDate fin = dpFin.getValue();
 
         if (inicio == null || fin == null) {
-            mostrarAlerta("Campos vacíos", "⚠️ Por favor selecciona una fecha de inicio y fin.");
+            mostrarAlerta("Campos vacíos", "Por favor selecciona una fecha de inicio y fin.");
             return;
         }
 
-        // Consulta SQL ajustada a sintaxis Oracle: TRUNC para fechas y TO_DATE para parámetros
-        String sql = "SELECT TRUNC(p.fechaHora) as dia, COUNT(p.idPedido) as totalPedidos, COALESCE(SUM(pa.total), 0) as totalIngresos " +
-                     "FROM pedidos p LEFT JOIN pagos pa ON p.idPedido = pa.idPedido " +
-                     "WHERE TRUNC(p.fechaHora) BETWEEN TO_DATE(?, 'YYYY-MM-DD') AND TO_DATE(?, 'YYYY-MM-DD') " +
-                     "GROUP BY TRUNC(p.fechaHora) ORDER BY totalPedidos DESC";
+        String sql = "SELECT TRUNC(t.FECHA_HORA) as fecha_truncada, " +
+             "COUNT(p.idPedido) as totalPedidos, " +
+             "COALESCE(SUM(pa.total), 0) as totalIngresos " +
+             "FROM pedidos p, TABLE(CAST(MULTISET(SELECT p.info FROM DUAL) AS auditoria_pedido_tab)) t " +
+             "LEFT JOIN pagos pa ON p.idPedido = pa.idPedido " +
+             "WHERE TRUNC(t.FECHA_HORA) BETWEEN TO_DATE(?, 'YYYY-MM-DD') AND TO_DATE(?, 'YYYY-MM-DD') " +
+             "GROUP BY TRUNC(t.FECHA_HORA) " +
+             "ORDER BY TRUNC(t.FECHA_HORA) DESC";
 
         listaPicos.clear();
-        
         try (Connection con = OracleConnect.getConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {
             
@@ -73,9 +75,10 @@ public class ReportePicosController {
             
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
+                    // Usamos el alias 'fecha_truncada' que definimos en el SELECT
                     listaPicos.add(new PicoActividad(
-                        rs.getDate("dia").toString(),
-                        rs.getInt("totalPedidos"),
+                        rs.getDate("fecha_truncada").toString(), 
+                        rs.getInt("totalPedidos"), 
                         rs.getDouble("totalIngresos")
                     ));
                 }

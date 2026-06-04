@@ -17,58 +17,53 @@ public class PagoDAO {
      * @param idMesa Identificador físico de la mesa.
      * @return true si la transacción fue exitosa.
      */
-    public boolean registrarPago(Pago pago, int idMesa) {
-        String sqlPago = "INSERT INTO pagos (total, metodoPago, idPedido) VALUES (?, ?, ?)";
-        String sqlPedido = "UPDATE pedidos SET estado = 'Pagado' WHERE idPedido = ?";
-        String sqlMesa = "UPDATE mesa SET estado = 'Libre' WHERE idMesa = ?";
+public boolean registrarPago(Pago pago, int idMesa) {
+    String sqlPago = "INSERT INTO pagos (total, metodoPago, idPedido) VALUES (?, ?, ?)";
+    
+    // CORRECCIÓN AQUÍ: Usamos el constructor del tipo para actualizar el estado dentro del objeto 'info'
+    // p.info = AUDITORIA_PEDIDO_TYP(fecha_actual, 'Pagado')
+    String sqlPedido = "UPDATE pedidos p SET p.info = AUDITORIA_PEDIDO_TYP(p.info.FECHA_HORA, 'Pagado') WHERE p.idPedido = ?";
+    
+    String sqlMesa = "UPDATE mesa SET estado = 'Libre' WHERE idMesa = ?";
+    
+    Connection con = null;
+    try {
+        con = OracleConnect.getConexion();
+        con.setAutoCommit(false); 
+
+        // 1. Insertar el ticket de pago
+        try (PreparedStatement psPago = con.prepareStatement(sqlPago)) {
+            psPago.setDouble(1, pago.getTotal());
+            psPago.setString(2, pago.getMetodo());
+            psPago.setInt(3, pago.getIdPedido());
+            psPago.executeUpdate();
+        }
+
+        // 2. Actualizar estado del pedido (USANDO EL CONSTRUCTOR DEL TIPO)
+        try (PreparedStatement psPedido = con.prepareStatement(sqlPedido)) {
+            psPedido.setInt(1, pago.getIdPedido());
+            psPedido.executeUpdate();
+        }
+
+        // 3. Liberar mesa
+        try (PreparedStatement psMesa = con.prepareStatement(sqlMesa)) {
+            psMesa.setInt(1, idMesa);
+            psMesa.executeUpdate();
+        }
+
+        con.commit(); 
+        return true;
         
-        Connection con = null;
-        try {
-            con = OracleConnect.getConexion();
-            con.setAutoCommit(false); 
-
-            // 1. Insertar el ticket de pago
-            try (PreparedStatement psPago = con.prepareStatement(sqlPago)) {
-                psPago.setDouble(1, pago.getTotal());
-                psPago.setString(2, pago.getMetodo());
-                psPago.setInt(3, pago.getIdPedido());
-                psPago.executeUpdate();
-            }
-
-            // 2. Actualizar estado del pedido
-            try (PreparedStatement psPedido = con.prepareStatement(sqlPedido)) {
-                psPedido.setInt(1, pago.getIdPedido());
-                psPedido.executeUpdate();
-            }
-
-            // 3. Liberar mesa
-            try (PreparedStatement psMesa = con.prepareStatement(sqlMesa)) {
-                psMesa.setInt(1, idMesa);
-                psMesa.executeUpdate();
-            }
-
-            con.commit(); 
-            System.out.println("Transacción completada. Mesa " + idMesa + " liberada.");
-            return true;
-            
-        } catch (SQLException e) {
-            if (con != null) {
-                try { 
-                    con.rollback(); 
-                    System.err.println("Error.");
-                } catch (SQLException ex) { 
-                    ex.printStackTrace(); 
-                }
-            }
-            System.err.println("Error crítico en transacción de pago: " + e.getMessage());
-            return false;
-        } finally {
-            if (con != null) {
-                try { 
-                    con.setAutoCommit(true); // Restaurar estado normal antes de cerrar
-                    con.close(); 
-                } catch (SQLException e) { e.printStackTrace(); }
-            }
+    } catch (SQLException e) {
+        if (con != null) {
+            try { con.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
+        }
+        System.err.println("Error crítico en transacción de pago: " + e.getMessage());
+        return false;
+    } finally {
+        if (con != null) {
+            try { con.setAutoCommit(true); con.close(); } catch (SQLException e) { e.printStackTrace(); }
         }
     }
+}
 }

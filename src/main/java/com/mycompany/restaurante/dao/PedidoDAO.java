@@ -21,31 +21,38 @@ public class PedidoDAO {
         this.conexion = conexion;
     }
 
-    public int obtenerPedidoActivoPorMesa(int idMesa) throws SQLException {
-        String sql = "SELECT idPedido FROM pedidos WHERE idMesa = ? "
-                   + "AND estado IN ('Pendiente', 'Listo') FETCH FIRST 1 ROWS ONLY";
-        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
-            ps.setInt(1, idMesa);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return rs.getInt("idPedido");
-            }
+public int obtenerPedidoActivoPorMesa(int idMesa) throws SQLException {
+    // CAMBIO: Apuntamos a la vista 'vista_pedidos_plana'
+    // Esta vista ya tiene las columnas 'ESTADO' y 'FECHA_HORA' de forma plana.
+    String sql = "SELECT idPedido FROM vista_pedidos_plana WHERE idMesa = ? "
+                + "AND ESTADO IN ('Pendiente', 'Listo') FETCH FIRST 1 ROWS ONLY";
+    
+    try (PreparedStatement ps = conexion.prepareStatement(sql)) {
+        ps.setInt(1, idMesa);
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getInt("idPedido");
         }
-        return -1;
     }
+    return -1;
+}
 
-    public int crearNuevoPedido(int idMesa, int idEmpleado) throws SQLException {
-        String sql = "INSERT INTO pedidos (idMesa, idEmpleado, estado, fechaHora) "
-                   + "VALUES (?, ?, 'Pendiente', SYSDATE)";
-        try (PreparedStatement ps = conexion.prepareStatement(sql, new String[] {"idPedido"})) {
-            ps.setInt(1, idMesa);
-            ps.setInt(2, idEmpleado);
-            ps.executeUpdate();
-            try (ResultSet rs = ps.getGeneratedKeys()) {
-                if (rs.next()) return rs.getInt(1);
-            }
+public int crearNuevoPedido(int idMesa, int idEmpleado) throws SQLException {
+    // 1. Ya no usamos la columna 'fechaHora', usamos 'info'
+    // 2. Usamos el constructor del objeto AUDITORIA_PEDIDO_TYP(fecha, estado)
+    String sql = "INSERT INTO pedidos (idMesa, idEmpleado, info) "
+               + "VALUES (?, ?, AUDITORIA_PEDIDO_TYP(SYSDATE, 'Pendiente'))";
+    
+    try (PreparedStatement ps = conexion.prepareStatement(sql, new String[] {"idPedido"})) {
+        ps.setInt(1, idMesa);
+        ps.setInt(2, idEmpleado);
+        ps.executeUpdate();
+        
+        try (ResultSet rs = ps.getGeneratedKeys()) {
+            if (rs.next()) return rs.getInt(1);
         }
-        throw new SQLException("Error al crear el pedido en Oracle.");
     }
+    throw new SQLException("Error al crear el pedido en Oracle.");
+}
 
     public void guardarDetallesPedido(int idPedido, List<Platillo> carrito) throws SQLException {
         actualizarEstadoPedido(idPedido, "Pendiente");
@@ -86,41 +93,48 @@ public class PedidoDAO {
         }
     }
 
-    public List<Pedido> buscarPedidosPorEstado(String estado) throws SQLException {
-        List<Pedido> lista = new ArrayList<>();
-        String sql = "SELECT idPedido, estado, fechaHora FROM pedidos WHERE estado = ? ORDER BY fechaHora ASC";
-        PlatilloDAO platilloDao = new PlatilloDAO(this.conexion);
-        
-        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
-            ps.setString(1, estado);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    Pedido pedido = new Pedido();
-                    int id = rs.getInt("idPedido");
-                    pedido.setIdPedido(id);
-                    pedido.setEstado(rs.getString("estado"));
-                    pedido.setFechaHora(rs.getTimestamp("fechaHora").toLocalDateTime());
-                    
-                    List<Platillo> platos = platilloDao.obtenerPlatillosPorOrden(id);
-                    StringBuilder sb = new StringBuilder();
-                    for (Platillo p : platos) {
-                        if (sb.length() > 0) sb.append(", ");
-                        sb.append(p.getCantidad()).append(" ").append(p.getNombre());
-                    }
-                    pedido.setDetalleTexto(sb.toString());
-                    lista.add(pedido);
+public List<Pedido> buscarPedidosPorEstado(String estadoFiltro) throws SQLException {
+    List<Pedido> lista = new ArrayList<>();
+    
+    // USAMOS LA VISTA: Esto garantiza que los campos estén planos y accesibles
+    String sql = "SELECT idPedido, ESTADO, FECHA_HORA " +
+                 "FROM vista_pedidos_plana " +
+                 "WHERE ESTADO = ? AND ESTADO != 'Pagado' " +
+                 "ORDER BY FECHA_HORA ASC";
+    
+    PlatilloDAO platilloDao = new PlatilloDAO(this.conexion);
+    try (PreparedStatement ps = conexion.prepareStatement(sql)) {
+        ps.setString(1, estadoFiltro);
+        try (ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Pedido pedido = new Pedido();
+                pedido.setIdPedido(rs.getInt("idPedido"));
+                pedido.setEstado(rs.getString("ESTADO")); 
+                pedido.setFechaHora(rs.getTimestamp("FECHA_HORA").toLocalDateTime());
+                
+                List<Platillo> platos = platilloDao.obtenerPlatillosPorOrden(pedido.getIdPedido());
+                
+                StringBuilder sb = new StringBuilder();
+                for (Platillo p : platos) {
+                    if (sb.length() > 0) sb.append(", ");
+                    sb.append(p.getCantidad()).append(" ").append(p.getNombre());
                 }
+                pedido.setDetalleTexto(sb.toString());
+                lista.add(pedido);
             }
         }
-        return lista;
     }
+    return lista;
+}
 
-    public boolean actualizarEstadoPedido(int idPedido, String nuevoEstado) throws SQLException {
-        String sql = "UPDATE pedidos SET estado = ? WHERE idPedido = ?";
-        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
-            ps.setString(1, nuevoEstado);
-            ps.setInt(2, idPedido);
-            return ps.executeUpdate() > 0;
-        }
+public boolean actualizarEstadoPedido(int idPedido, String nuevoEstado) throws SQLException {
+    // Si tu tipo es (FECHA, ESTADO), usamos el constructor así:
+    String sql = "UPDATE pedidos p SET p.info = AUDITORIA_PEDIDO_TYP(p.info.FECHA_HORA, ?) WHERE p.idPedido = ?";
+    
+    try (PreparedStatement ps = conexion.prepareStatement(sql)) {
+        ps.setString(1, nuevoEstado);
+        ps.setInt(2, idPedido);
+        return ps.executeUpdate() > 0;
     }
+}
 }

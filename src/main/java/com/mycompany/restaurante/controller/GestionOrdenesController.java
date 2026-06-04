@@ -78,7 +78,8 @@ public class GestionOrdenesController implements Initializable {
         confirmacion.setContentText("¿Deseas cancelar la Orden #" + pedidoSeleccionado.getIdPedido() + "? Se liberará la mesa.");
         
         if (confirmacion.showAndWait().get() == ButtonType.OK) {
-            String sqlPedido = "UPDATE pedidos SET estado = 'Cancelado' WHERE idPedido = ?";
+// Cambia tu sqlPedido a esto:
+            String sqlPedido = "UPDATE pedidos p SET info = AUDITORIA_PEDIDO_TYP(p.info.FECHA_HORA,?) WHERE p.idPedido = ?";
             String sqlMesa = "UPDATE mesa SET estado = 'Libre' WHERE idMesa = ?";
 
             try (Connection con = OracleConnect.getConexion()) {

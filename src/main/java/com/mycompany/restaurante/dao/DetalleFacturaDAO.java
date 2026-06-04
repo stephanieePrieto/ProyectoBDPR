@@ -9,27 +9,30 @@ import javafx.collections.*;
 
 public class DetalleFacturaDAO {
 
-    public double obtenerSubtotalMesa(int idMesa) {
-        String sql = "SELECT SUM(p.precio * dp.cantidad) AS subtotal "
-                   + "FROM detallepedidos dp JOIN platillos p ON dp.idPlatillo = p.idPlatillo "
-                   + "JOIN pedidos pe ON dp.idPedido = pe.idPedido "
-                   + "WHERE pe.idMesa = ? AND pe.estado IN ('Pendiente', 'Listo')";
+public double obtenerSubtotalMesa(int idMesa) {
+    // CORRECCIÓN: Filtramos para que SOLO sume si el estado es 'Pendiente' o 'Listo'. 
+    // EL ESTADO 'Pagado' DEBE QUEDAR FUERA.
+    String sql = "SELECT SUM(p.precio * dp.cantidad) AS subtotal "
+                + "FROM detallepedidos dp JOIN platillos p ON dp.idPlatillo = p.idPlatillo "
+                + "JOIN pedidos pe ON dp.idPedido = pe.idPedido "
+                + "WHERE pe.idMesa = ? AND pe.info.ESTADO IN ('Pendiente', 'Listo')"; 
 
-        try (Connection con = OracleConnect.getConexion(); PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, idMesa);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? rs.getDouble("subtotal") : 0.0;
-            }
-        } catch (SQLException e) { e.printStackTrace(); return 0.0; }
-    }
+    try (Connection con = OracleConnect.getConexion(); PreparedStatement ps = con.prepareStatement(sql)) {
+        ps.setInt(1, idMesa);
+        try (ResultSet rs = ps.executeQuery()) {
+            return rs.next() ? rs.getDouble("subtotal") : 0.0;
+        }
+    } catch (SQLException e) { e.printStackTrace(); return 0.0; }
+}
 
-    public List<Platillo> obtenerDetallePedidoPorMesa(int idMesa) {
-        List<Platillo> lista = new ArrayList<>();
-        String sql = "SELECT p.nombre, dp.cantidad, p.precio "
-                   + "FROM detallepedidos dp JOIN platillos p ON dp.idPlatillo = p.idPlatillo "
-                   + "JOIN pedidos pe ON dp.idPedido = pe.idPedido "
-                   + "WHERE pe.idMesa = ? AND pe.estado IN ('Pendiente', 'Listo') "
-                   + "ORDER BY pe.idPedido DESC";
+public List<Platillo> obtenerDetallePedidoPorMesa(int idMesa) {
+    
+    List<Platillo> lista = new ArrayList<>();
+    String sql = "SELECT p.nombre, dp.cantidad, p.precio "
+               + "FROM detallepedidos dp JOIN platillos p ON dp.idPlatillo = p.idPlatillo "
+               + "JOIN pedidos pe ON dp.idPedido = pe.idPedido "
+               + "WHERE pe.idMesa = ? AND pe.info.ESTADO IN ('Pendiente', 'Listo') " // ¡IMPORTANTE: No incluir 'Pagado' aquí!
+               + "ORDER BY pe.idPedido DESC";
 
         try (Connection con = OracleConnect.getConexion(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, idMesa);
@@ -46,39 +49,43 @@ public class DetalleFacturaDAO {
         return lista;
     }
 
-    public int obtenerPedidoPorMesa(int idMesa) {
-        // Oracle: FETCH FIRST 1 ROWS ONLY para sustituir LIMIT 1
-        String sql = "SELECT idPedido FROM pedidos WHERE idMesa = ? AND estado IN ('Pendiente', 'Listo', 'Pagado') "
-                   + "ORDER BY idPedido DESC FETCH FIRST 1 ROWS ONLY";
+public int obtenerPedidoPorMesa(int idMesa) {
+    // CORRECCIÓN: Igual aquí, no busques 'Pagado' para registrar un nuevo pago.
+String sql = "SELECT idPedido FROM vista_pedidos_plana " +
+                 "WHERE idMesa = ? AND ESTADO IN ('Pendiente', 'Listo', 'Pagado') " +
+                 "ORDER BY idPedido DESC FETCH FIRST 1 ROWS ONLY";
 
-        try (Connection con = OracleConnect.getConexion(); PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, idMesa);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? rs.getInt("idPedido") : 0;
+    try (Connection con = OracleConnect.getConexion(); PreparedStatement ps = con.prepareStatement(sql)) {
+        ps.setInt(1, idMesa);
+        try (ResultSet rs = ps.executeQuery()) {
+            return rs.next() ? rs.getInt("idPedido") : 0;
+        }
+    } catch (SQLException e) { e.printStackTrace(); return 0; }
+}
+
+public ObservableList<DetalleFactura> obtenerDetallesFactura(int idMesa) {
+    ObservableList<DetalleFactura> lista = FXCollections.observableArrayList();
+    
+    // USAMOS LA VISTA AQUÍ TAMBIÉN
+    String sql = "SELECT p.nombre, d.cantidad, p.precio, (p.precio * d.cantidad) AS fila_subtotal "
+               + "FROM detallepedidos d "
+               + "JOIN platillos p ON d.idPlatillo = p.idPlatillo "
+               + "JOIN vista_pedidos_plana pe ON d.idPedido = pe.idPedido " // Apuntamos a la vista
+               + "WHERE pe.idMesa = ? AND pe.ESTADO = 'Pagado' "           // Acceso directo a ESTADO
+               + "AND pe.idPedido = (SELECT MAX(idPedido) FROM vista_pedidos_plana WHERE idMesa = ? AND ESTADO = 'Pagado')";
+
+    try (Connection con = OracleConnect.getConexion(); PreparedStatement ps = con.prepareStatement(sql)) {
+        ps.setInt(1, idMesa); 
+        ps.setInt(2, idMesa);
+        try (ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                lista.add(new DetalleFactura(
+                    "90101501", rs.getInt("cantidad"), "E48", 
+                    rs.getString("nombre"), rs.getDouble("precio"), rs.getDouble("fila_subtotal")
+                ));
             }
-        } catch (SQLException e) { e.printStackTrace(); return 0; }
-    }
-
-    public ObservableList<DetalleFactura> obtenerDetallesFactura(int idMesa) {
-        ObservableList<DetalleFactura> lista = FXCollections.observableArrayList();
-        // Subconsulta para el pedido pagado más reciente
-        String sql = "SELECT p.nombre, d.cantidad, p.precio, (p.precio * d.cantidad) AS fila_subtotal "
-                   + "FROM detallepedidos d JOIN platillos p ON d.idPlatillo = p.idPlatillo "
-                   + "JOIN pedidos pe ON d.idPedido = pe.idPedido "
-                   + "WHERE pe.idMesa = ? AND pe.estado = 'Pagado' "
-                   + "AND pe.idPedido = (SELECT MAX(idPedido) FROM pedidos WHERE idMesa = ? AND estado = 'Pagado')";
-
-        try (Connection con = OracleConnect.getConexion(); PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, idMesa); ps.setInt(2, idMesa);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    lista.add(new DetalleFactura(
-                        "90101501", rs.getInt("cantidad"), "E48", 
-                        rs.getString("nombre"), rs.getDouble("precio"), rs.getDouble("fila_subtotal")
-                    ));
-                }
-            }
-        } catch (SQLException e) { e.printStackTrace(); }
-        return lista;
-    }
+        }
+    } catch (SQLException e) { e.printStackTrace(); }
+    return lista;
+}
 }

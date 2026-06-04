@@ -41,5 +41,6 @@
          </image>
       </ImageView>
       <Button layoutX="45.0" layoutY="41.0" mnemonicParsing="false" onAction="#clicActualizarManual" prefHeight="38.0" prefWidth="130.0" styleClass="boton-enviar-chef" stylesheets="@../styles/styles.css" text="Actualizar" />
+      <Button layoutX="8.0" layoutY="99.0" mnemonicParsing="false" onAction="#clicVerConsolaAvanzada" prefHeight="42.0" prefWidth="167.0" styleClass="boton-enviar-chef" stylesheets="@../styles/styles.css" text="ConsolaAvanzada" />
    </children>
 </AnchorPane>

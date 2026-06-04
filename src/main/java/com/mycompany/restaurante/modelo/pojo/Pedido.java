@@ -34,6 +34,7 @@ public class Pedido {
     
     /** Resumen consolidado de platillos en formato de texto para visualización en tablas. */
     private String detalleTexto; 
+   
 
     /**
      * Constructor predeterminado de la clase Pedido.
