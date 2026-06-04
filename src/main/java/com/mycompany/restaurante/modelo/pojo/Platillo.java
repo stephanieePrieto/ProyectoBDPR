@@ -4,7 +4,6 @@ package com.mycompany.restaurante.modelo.pojo;
  * Plain Old Java Object (POJO) unificado que representa la entidad Platillo.
  * Encapsula las propiedades de los artículos del menú, mapeando columnas 
  * del esquema relacional y variables auxiliares para interfaces de JavaFX.
- * * @author Ricardo, Diego, Angel, Stephy
  */
 public class Platillo {
     

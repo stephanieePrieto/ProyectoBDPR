@@ -7,20 +7,32 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Clase de Acceso a Datos (DAO) para la gestión del catálogo de platillos 
+ * Clase encargada de gestionar las operaciones de base de datos para el catálogo de platillos.
  */
 public class PlatilloDAO {
     
     private Connection conexion;
 
+    /**
+     * Constructor que inicializa una nueva conexión a la base de datos.
+     */
     public PlatilloDAO() {
         this.conexion = OracleConnect.getConexion();
     }
 
+    /**
+     * Constructor que utiliza una conexión existente.
+     * @param conexion Objeto Connection activo.
+     */
     public PlatilloDAO(Connection conexion) {
         this.conexion = conexion;
     }
 
+    /**
+     * Convierte el nombre o identificador de una categoría a su valor numérico correspondiente.
+     * @param nombreCategoria Nombre o ID de la categoría como cadena.
+     * @return Identificador numérico de la categoría.
+     */
     private int obtenerIdCategoriaNumerico(String nombreCategoria) {
         if (nombreCategoria == null) return 1;
         switch (nombreCategoria.trim()) {
@@ -33,6 +45,11 @@ public class PlatilloDAO {
         }
     }
 
+    /**
+     * Obtiene la lista de platillos que se encuentran actualmente disponibles.
+     * @return Lista de objetos Platillo con su información y stock actual.
+     * @throws SQLException Si ocurre un error durante la consulta.
+     */
     public List<Platillo> obtenerPlatillosActivos() throws SQLException {
         List<Platillo> lista = new ArrayList<>();
         String sql = "SELECT p.*, a.stock AS stockDisponible " +
@@ -58,6 +75,11 @@ public class PlatilloDAO {
         return lista;
     }   
 
+    /**
+     * Registra un nuevo platillo en la base de datos con estado 'Disponible'.
+     * @param platillo Objeto Platillo con los datos del nuevo platillo.
+     * @return Verdadero si el registro fue exitoso, falso en caso contrario.
+     */
     public boolean registrarPlatillo(Platillo platillo) {
         String sql = "INSERT INTO platillos (nombre, descripcion, precio, estado, idCategoria, imagen, idInsumoClave) "
                    + "VALUES (?, ?, ?, 'Disponible', ?, ?, ?)";
@@ -81,6 +103,11 @@ public class PlatilloDAO {
         }
     }
 
+    /**
+     * Actualiza la información de un platillo existente.
+     * @param platillo Objeto Platillo con los datos actualizados.
+     * @return Verdadero si la actualización fue exitosa, falso en caso contrario.
+     */
     public boolean actualizarPlatillo(Platillo platillo) {
         String sql = "UPDATE platillos SET nombre = ?, descripcion = ?, precio = ?, idCategoria = ?, "
                    + "imagen = ?, idInsumoClave = ? WHERE idPlatillo = ?";
@@ -105,6 +132,12 @@ public class PlatilloDAO {
         }
     }
 
+    /**
+     * Obtiene los detalles de los platillos asociados a una orden específica.
+     * @param idOrden Identificador de la orden.
+     * @return Lista de objetos Platillo con los detalles del pedido.
+     * @throws SQLException Si ocurre un error en la consulta.
+     */
     public List<Platillo> obtenerPlatillosPorOrden(int idOrden) throws SQLException {
         List<Platillo> listaPlatillos = new ArrayList<>();
         String sql = "SELECT p.nombre, p.descripcion, p.precio, dp.cantidad "
@@ -127,6 +160,11 @@ public class PlatilloDAO {
         return listaPlatillos;
     }
 
+    /**
+     * Cambia el estado de un platillo a 'Inactivo'.
+     * @param idPlatillo Identificador único del platillo a dar de baja.
+     * @return Verdadero si la operación fue exitosa, falso en caso contrario.
+     */
     public boolean darDeBajaPlatillo(int idPlatillo) {
         String sql = "UPDATE platillos SET estado = 'Inactivo' WHERE idPlatillo = ?";
         try (PreparedStatement ps = conexion.prepareStatement(sql)) {

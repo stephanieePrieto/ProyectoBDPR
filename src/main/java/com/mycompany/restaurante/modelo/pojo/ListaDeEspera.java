@@ -4,7 +4,6 @@ package com.mycompany.restaurante.modelo.pojo;
  * Clase de modelo (POJO) que representa un registro en la lista de espera del restaurante.
  * Almacena la información de contacto y el estatus de los comensales que aguardan 
  * por una mesa disponible, permitiendo su correcta gestión administrativa.
- * * @author Ricardo, Diego, Angel, Stephy
  */
 public class ListaDeEspera {
 

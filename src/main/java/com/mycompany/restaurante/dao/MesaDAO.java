@@ -10,10 +10,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Clase de Acceso a Datos (DAO) para la gestión del inventario físico de mesas.
+ * Clase encargada de gestionar las operaciones de base de datos para el control de mesas.
  */
 public class MesaDAO {
 
+    /**
+     * Obtiene una lista de todas las mesas registradas, ordenadas por su identificador.
+     * @return Lista de objetos Mesa con su respectivo estado actual.
+     */
     public List<Mesa> listarMesas() {
         List<Mesa> mesas = new ArrayList<>();
         String sql = "SELECT idMesa, estado FROM mesa ORDER BY idMesa ASC";
@@ -35,6 +39,12 @@ public class MesaDAO {
         return mesas;
     }
 
+    /**
+     * Actualiza el estado de una mesa específica.
+     * @param idMesa Identificador de la mesa.
+     * @param estado Nuevo estado a asignar.
+     * @return Verdadero si la actualización fue exitosa, falso en caso contrario.
+     */
     public boolean actualizarEstadoMesa(int idMesa, String estado) {
         String sql = "UPDATE mesa SET estado = ? WHERE idMesa = ?";
 
@@ -51,6 +61,11 @@ public class MesaDAO {
         }
     }
 
+    /**
+     * Cambia el estado de una mesa a 'Libre'.
+     * @param idMesa Identificador de la mesa a liberar.
+     * @return Verdadero si el estado se actualizó, falso en caso contrario.
+     */
     public boolean liberarMesa(int idMesa) {
         String sql = "UPDATE mesa SET estado = 'Libre' WHERE idMesa = ?";
 
@@ -67,10 +82,11 @@ public class MesaDAO {
     }
 
     /**
-     * Construye un resumen textual de platillos servidos usando LISTAGG.
+     * Consulta y concatena los platillos activos consumidos en una mesa.
+     * @param idMesa Identificador de la mesa a consultar.
+     * @return Cadena con el resumen de platillos o "Sin consumo" si no hay pedidos activos.
      */
     public String obtenerDetallesMesa(int idMesa) {
-        // Oracle usa LISTAGG para concatenar filas. Usamos '||' para concatenar texto.
         String sql = "SELECT LISTAGG(dp.cantidad || 'x ' || p.nombre, ', ') WITHIN GROUP (ORDER BY p.nombre) AS detalles "
                    + "FROM pedidos pe "
                    + "INNER JOIN detallepedidos dp ON pe.idPedido = dp.idPedido "

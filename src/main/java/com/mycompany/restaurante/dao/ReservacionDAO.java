@@ -7,21 +7,32 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Clase de Acceso a Datos (DAO) para la gestión de reservaciones 
+ * Clase encargada de gestionar las operaciones de base de datos para las reservaciones.
  */
 public class ReservacionDAO {
     private Connection conexion;
 
+    /**
+     * Constructor que inicializa la conexión con la base de datos.
+     */
     public ReservacionDAO() {
         this.conexion = OracleConnect.getConexion();
     }
 
+    /**
+     * Verifica si la conexión está activa, de lo contrario intenta reconectar.
+     * @throws SQLException Si ocurre un error al verificar o establecer la conexión.
+     */
     private void verificarConexion() throws SQLException {
         if (this.conexion == null || this.conexion.isClosed()) {
             this.conexion = OracleConnect.getConexion();
         }
     }
 
+    /**
+     * Identifica reservaciones confirmadas que excedieron el tiempo de tolerancia (15 minutos)
+     * y las cancela, liberando las mesas correspondientes.
+     */
     public void depurarReservacionesVencidas() {
         String sqlUpdateReservas = "UPDATE reservaciones SET estado = 'Cancelada' "
                                  + "WHERE TRUNC(fecha) = TRUNC(SYSDATE) AND estado = 'Confirmada' "
@@ -50,12 +61,18 @@ public class ReservacionDAO {
         }
     }
 
+    /**
+     * Busca una reservación específica utilizando su código de folio único.
+     * @param folio Código identificador de la reservación.
+     * @return Objeto Reservacion si se encuentra, o null si no existe.
+     * @throws SQLException Si ocurre un error durante la consulta.
+     */
     public Reservacion buscarPorFolio(String folio) throws SQLException {
         verificarConexion();
         String sql = "SELECT r.idReservacion, r.folioUnico, r.id_cliente, c.nombre AS nombre_cliente, "
-                   + "r.idMesa, r.fecha, r.hora, r.num_personas, r.estado FROM reservaciones r "
-                   + "LEFT JOIN clientes c ON r.id_cliente = c.id_cliente "
-                   + "WHERE r.folioUnico = ? FETCH FIRST 1 ROWS ONLY";
+                    + "r.idMesa, r.fecha, r.hora, r.num_personas, r.estado FROM reservaciones r "
+                    + "LEFT JOIN clientes c ON r.id_cliente = c.id_cliente "
+                    + "WHERE r.folioUnico = ? FETCH FIRST 1 ROWS ONLY";
 
         try (PreparedStatement ps = conexion.prepareStatement(sql)) {
             ps.setString(1, folio);
@@ -71,12 +88,17 @@ public class ReservacionDAO {
         return null;
     }
 
+    /**
+     * Obtiene una lista de todas las reservaciones registradas, ordenadas de la más reciente a la antigua.
+     * @return Lista de objetos Reservacion.
+     * @throws SQLException Si ocurre un error al obtener los datos.
+     */
     public List<Reservacion> obtenerTodasLasReservaciones() throws SQLException {
         verificarConexion();
         List<Reservacion> lista = new ArrayList<>();
         String sql = "SELECT r.idReservacion, r.folioUnico, r.id_cliente, c.nombre AS nombre_cliente, "
-                   + "r.idMesa, r.fecha, r.hora, r.num_personas, r.estado FROM reservaciones r "
-                   + "LEFT JOIN clientes c ON r.id_cliente = c.id_cliente ORDER BY r.idReservacion DESC";
+                    + "r.idMesa, r.fecha, r.hora, r.num_personas, r.estado FROM reservaciones r "
+                    + "LEFT JOIN clientes c ON r.id_cliente = c.id_cliente ORDER BY r.idReservacion DESC";
 
         try (PreparedStatement ps = conexion.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
@@ -89,6 +111,12 @@ public class ReservacionDAO {
         return lista;
     }
 
+    /**
+     * Obtiene el ID de un cliente existente por nombre o crea un registro nuevo si no existe.
+     * @param nombreCliente Nombre del cliente a buscar o registrar.
+     * @return ID del cliente obtenido o generado.
+     * @throws SQLException Si ocurre un error al consultar o insertar el cliente.
+     */
     public String obtenerOGenerarIdCliente(String nombreCliente) throws SQLException {
         verificarConexion();
         String sqlBuscar = "SELECT id_cliente FROM clientes WHERE nombre = ? FETCH FIRST 1 ROWS ONLY";
@@ -115,45 +143,61 @@ public class ReservacionDAO {
         return nuevoId;
     }
 
-public boolean insertarReservacion(Reservacion r) throws SQLException {
-    verificarConexion();
-    String idRealCliente = obtenerOGenerarIdCliente(r.getNombreCliente());
-    
-    // Cambiamos el '?' de la fecha por TO_DATE(?, 'YYYY-MM-DD')
-    String sql = "INSERT INTO reservaciones (folioUnico, id_cliente, idMesa, fecha, hora, num_personas, estado) " +
-                 "VALUES (?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), ?, ?, ?)";
-    
-    try (PreparedStatement ps = conexion.prepareStatement(sql)) {
-        ps.setString(1, r.getFolioUnico()); 
-        ps.setString(2, idRealCliente);
-        ps.setInt(3, r.getIdMesa()); 
-        ps.setString(4, r.getFecha()); // Aquí envías tu String "YYYY-MM-DD"
-        ps.setString(5, r.getHora()); 
-        ps.setInt(6, r.getNumPersonas());
-        ps.setString(7, r.getEstado());
-        return ps.executeUpdate() > 0;
+    /**
+     * Inserta una nueva reservación en la base de datos.
+     * @param r Objeto Reservacion con la información a guardar.
+     * @return Verdadero si la inserción fue exitosa, falso en caso contrario.
+     * @throws SQLException Si ocurre un error al realizar la inserción.
+     */
+    public boolean insertarReservacion(Reservacion r) throws SQLException {
+        verificarConexion();
+        String idRealCliente = obtenerOGenerarIdCliente(r.getNombreCliente());
+        
+        String sql = "INSERT INTO reservaciones (folioUnico, id_cliente, idMesa, fecha, hora, num_personas, estado) " +
+                     "VALUES (?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), ?, ?, ?)";
+        
+        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
+            ps.setString(1, r.getFolioUnico()); 
+            ps.setString(2, idRealCliente);
+            ps.setInt(3, r.getIdMesa()); 
+            ps.setString(4, r.getFecha()); 
+            ps.setString(5, r.getHora()); 
+            ps.setInt(6, r.getNumPersonas());
+            ps.setString(7, r.getEstado());
+            return ps.executeUpdate() > 0;
+        }
     }
-}
 
-public boolean actualizarReservacion(Reservacion r) throws SQLException {
-    verificarConexion();
-    String idRealCliente = obtenerOGenerarIdCliente(r.getNombreCliente());
-    
-    // Agregamos TO_DATE aquí también
-    String sql = "UPDATE reservaciones SET id_cliente = ?, idMesa = ?, fecha = TO_DATE(?, 'YYYY-MM-DD'), hora = ?, num_personas = ? " +
-                 "WHERE idReservacion = ?";
-    
-    try (PreparedStatement ps = conexion.prepareStatement(sql)) {
-        ps.setString(1, idRealCliente); 
-        ps.setInt(2, r.getIdMesa());
-        ps.setString(3, r.getFecha()); // Tu fecha en formato YYYY-MM-DD
-        ps.setString(4, r.getHora());
-        ps.setInt(5, r.getNumPersonas()); 
-        ps.setInt(6, r.getIdReservacion());
-        return ps.executeUpdate() > 0;
+    /**
+     * Actualiza la información de una reservación existente.
+     * @param r Objeto Reservacion con los datos actualizados.
+     * @return Verdadero si la actualización fue exitosa, falso en caso contrario.
+     * @throws SQLException Si ocurre un error al realizar la actualización.
+     */
+    public boolean actualizarReservacion(Reservacion r) throws SQLException {
+        verificarConexion();
+        String idRealCliente = obtenerOGenerarIdCliente(r.getNombreCliente());
+        
+        String sql = "UPDATE reservaciones SET id_cliente = ?, idMesa = ?, fecha = TO_DATE(?, 'YYYY-MM-DD'), hora = ?, num_personas = ? " +
+                     "WHERE idReservacion = ?";
+        
+        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
+            ps.setString(1, idRealCliente); 
+            ps.setInt(2, r.getIdMesa());
+            ps.setString(3, r.getFecha());
+            ps.setString(4, r.getHora());
+            ps.setInt(5, r.getNumPersonas()); 
+            ps.setInt(6, r.getIdReservacion());
+            return ps.executeUpdate() > 0;
+        }
     }
-}
 
+    /**
+     * Cambia el estado de una reservación a 'Cancelada'.
+     * @param idReservacion Identificador único de la reservación a cancelar.
+     * @return Verdadero si el estado se cambió correctamente, falso en caso contrario.
+     * @throws SQLException Si ocurre un error durante la actualización.
+     */
     public boolean cancelarReservacion(int idReservacion) throws SQLException {
         verificarConexion();
         String sql = "UPDATE reservaciones SET estado = 'Cancelada' WHERE idReservacion = ?";

@@ -4,7 +4,6 @@ package com.mycompany.restaurante.modelo.pojo;
  * Clase de modelo (POJO) que representa una transacción de pago realizada.
  * Esta entidad encapsula la información necesaria para registrar el cobro de una comanda,
  * vinculando el monto total, el método de pago empleado y la referencia al pedido original.
- * * @author Ricardo, Diego, Angel, Stephy
  */
 public class Pago {
     

@@ -4,7 +4,6 @@ package com.mycompany.restaurante.modelo.pojo;
  * Clase de modelo (POJO) que representa una cuenta de consumo.
  * Gestiona el estado financiero de una orden, permitiendo distinguir entre 
  * cuentas pendientes de pago y cuentas liquidadas.
- * * @author Ricardo, Diego, Angel, Stephy
  */
 public class Cuenta {
     
