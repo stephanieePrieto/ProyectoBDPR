@@ -1,7 +1,7 @@
 package com.mycompany.restaurante.dao;
 
 import com.mycompany.restaurante.modelo.pojo.Usuario;
-import com.mycompany.restaurante.modelo.sql.OracleConnect; // Conexión a la nube
+import com.mycompany.restaurante.modelo.sql.OracleConnect; 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,7 +9,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 /**
- * Clase de Acceso a Datos (DAO) para la gestión del personal y autenticación en Oracle.
+ * Clase de Acceso a Datos (DAO) para la gestión del personal y autenticación 
  */
 public class UsuarioDAO {
 
@@ -72,7 +72,6 @@ public class UsuarioDAO {
     }
 
     public boolean registrarEmpleado(Usuario u) {
-        // Nota: En Oracle, si usas IDENTITY para idEmpleado, no es necesario incluirlo aquí
         String sql = "INSERT INTO empleados (nombre, usuario, password, idRol) VALUES (?, ?, ?, ?)";
         try (Connection con = OracleConnect.getConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {

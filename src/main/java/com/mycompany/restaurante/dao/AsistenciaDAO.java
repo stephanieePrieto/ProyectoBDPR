@@ -7,9 +7,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import java.time.LocalDate;
 
-/**
- * Clase AsistenciaDAO migrada a Oracle Cloud.
- */
+
 public class AsistenciaDAO {
     
     public AsistenciaDAO() {}

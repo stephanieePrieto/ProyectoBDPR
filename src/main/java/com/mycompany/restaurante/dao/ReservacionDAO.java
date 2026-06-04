@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Clase de Acceso a Datos (DAO) para la gestión de reservaciones en Oracle Cloud.
+ * Clase de Acceso a Datos (DAO) para la gestión de reservaciones 
  */
 public class ReservacionDAO {
     private Connection conexion;
@@ -23,7 +23,6 @@ public class ReservacionDAO {
     }
 
     public void depurarReservacionesVencidas() {
-        // Oracle: Usamos INTERVAL y SYSTIMESTAMP para la tolerancia de 15 minutos
         String sqlUpdateReservas = "UPDATE reservaciones SET estado = 'Cancelada' "
                                  + "WHERE TRUNC(fecha) = TRUNC(SYSDATE) AND estado = 'Confirmada' "
                                  + "AND (hora + INTERVAL '15' MINUTE) < SYSTIMESTAMP";
@@ -53,7 +52,6 @@ public class ReservacionDAO {
 
     public Reservacion buscarPorFolio(String folio) throws SQLException {
         verificarConexion();
-        // Oracle: FETCH FIRST 1 ROWS ONLY para limitar resultados
         String sql = "SELECT r.idReservacion, r.folioUnico, r.id_cliente, c.nombre AS nombre_cliente, "
                    + "r.idMesa, r.fecha, r.hora, r.num_personas, r.estado FROM reservaciones r "
                    + "LEFT JOIN clientes c ON r.id_cliente = c.id_cliente "

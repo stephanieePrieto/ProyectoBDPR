@@ -8,7 +8,6 @@ import java.util.List;
 
 public class AlmacenDAO {
 
-    // Cambiamos 'almacen' por el nombre real de la tabla en Oracle: 'INVENTARIOMATERIAPRIMA'
     private final String TABLE_NAME = "INVENTARIOMATERIAPRIMA";
 
     public List<ProductoAlmacen> obtenerProductos() {

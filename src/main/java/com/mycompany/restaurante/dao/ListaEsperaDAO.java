@@ -11,7 +11,6 @@ import java.sql.SQLException;
 
 /**
  * Clase de Acceso a Datos (DAO) para la gestión del flujo de clientes en lista de espera.
- * Adaptada para Oracle Cloud Autonomous Database.
  */
 public class ListaEsperaDAO {
 
@@ -84,7 +83,7 @@ public class ListaEsperaDAO {
     }
 
     /**
-     * Actualiza el estado a ATENDIDO en la base de datos Oracle.
+     * Actualiza el estado a ATENDIDO 
      * @param idEspera
      * @return 
      */

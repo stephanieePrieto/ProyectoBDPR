@@ -11,13 +11,11 @@ import java.util.List;
 
 /**
  * Clase de Acceso a Datos (DAO) para la gestión del inventario físico de mesas.
- * Adaptada para Oracle Cloud.
  */
 public class MesaDAO {
 
     public List<Mesa> listarMesas() {
         List<Mesa> mesas = new ArrayList<>();
-        // En Oracle, las tablas suelen escribirse en mayúsculas, pero funcionan en minúsculas si no se usaron comillas al crear.
         String sql = "SELECT idMesa, estado FROM mesa ORDER BY idMesa ASC";
 
         try (Connection con = OracleConnect.getConexion();

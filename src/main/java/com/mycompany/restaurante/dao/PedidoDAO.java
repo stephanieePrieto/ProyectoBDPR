@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Clase de Acceso a Datos (DAO) para la gestión operativa de comandas en Oracle Cloud.
+ * Clase de Acceso a Datos (DAO) para la gestión operativa de comandas 
  */
 public class PedidoDAO {
     private Connection conexion;
@@ -22,7 +22,6 @@ public class PedidoDAO {
     }
 
     public int obtenerPedidoActivoPorMesa(int idMesa) throws SQLException {
-        // Oracle: FETCH FIRST 1 ROWS ONLY sustituye al LIMIT 1
         String sql = "SELECT idPedido FROM pedidos WHERE idMesa = ? "
                    + "AND estado IN ('Pendiente', 'Listo') FETCH FIRST 1 ROWS ONLY";
         try (PreparedStatement ps = conexion.prepareStatement(sql)) {
@@ -35,7 +34,6 @@ public class PedidoDAO {
     }
 
     public int crearNuevoPedido(int idMesa, int idEmpleado) throws SQLException {
-        // En Oracle, las tablas con IDENTITY generan las keys automáticamente
         String sql = "INSERT INTO pedidos (idMesa, idEmpleado, estado, fechaHora) "
                    + "VALUES (?, ?, 'Pendiente', SYSDATE)";
         try (PreparedStatement ps = conexion.prepareStatement(sql, new String[] {"idPedido"})) {

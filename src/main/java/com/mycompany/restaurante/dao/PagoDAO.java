@@ -1,14 +1,13 @@
 package com.mycompany.restaurante.dao;
 
 import com.mycompany.restaurante.modelo.pojo.Pago;
-import com.mycompany.restaurante.modelo.sql.OracleConnect; // Cambio a la conexión de Oracle Cloud
+import com.mycompany.restaurante.modelo.sql.OracleConnect; 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 /**
  * Clase de Acceso a Datos (DAO) para el procesamiento de pagos.
- * Implementa lógica transaccional para Oracle Cloud.
  */
 public class PagoDAO {
 
@@ -25,7 +24,6 @@ public class PagoDAO {
         
         Connection con = null;
         try {
-            // Usamos la conexión de Oracle Cloud
             con = OracleConnect.getConexion();
             con.setAutoCommit(false); 
 
@@ -50,19 +48,19 @@ public class PagoDAO {
             }
 
             con.commit(); 
-            System.out.println(">> [PagoDAO] Transacción completada en Oracle Cloud. Mesa " + idMesa + " liberada.");
+            System.out.println("Transacción completada. Mesa " + idMesa + " liberada.");
             return true;
             
         } catch (SQLException e) {
             if (con != null) {
                 try { 
                     con.rollback(); 
-                    System.err.println(">> [PagoDAO] Error: Rollback ejecutado en Oracle.");
+                    System.err.println("Error.");
                 } catch (SQLException ex) { 
                     ex.printStackTrace(); 
                 }
             }
-            System.err.println("Error crítico en transacción de pago (Oracle): " + e.getMessage());
+            System.err.println("Error crítico en transacción de pago: " + e.getMessage());
             return false;
         } finally {
             if (con != null) {

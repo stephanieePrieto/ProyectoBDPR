@@ -11,11 +11,10 @@ public class OpinionDAO {
 
     private MongoCollection<Opinion> getColeccion() {
         MongoDatabase db = MongoConnect.getBaseDatos();
-        // Sincroniza el POJO Opinion directamente con la colección NoSQL
         return db.getCollection("opiniones_clientes", Opinion.class);
     }
 
-    // 📥 MÉTODO 1: Guardar cualquier opinión (Comentario, Queja o Sugerencia) de forma Anónima
+    // Guardar cualquier opinión (Comentario, Queja o Sugerencia) de forma Anónima
     public boolean registrarOpinion(Opinion nuevaOpinion) {
         try {
             getColeccion().insertOne(nuevaOpinion);
@@ -28,7 +27,7 @@ public class OpinionDAO {
         }
     }
 
-    // 📤 MÉTODO 2: Renombrado a obtainAllOpiniones() para que haga match exacto con tu controlador unificado
+    // Renombrado a obtainAllOpiniones() para que haga match exacto con tu controlador unificado
     public List<Opinion> obtainAllOpiniones() {
         List<Opinion> lista = new ArrayList<>();
         try {

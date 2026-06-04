@@ -7,9 +7,6 @@ import java.sql.*;
 import java.util.*;
 import javafx.collections.*;
 
-/**
- * Clase DAO para la gestión de detalles de facturación en Oracle Cloud.
- */
 public class DetalleFacturaDAO {
 
     public double obtenerSubtotalMesa(int idMesa) {

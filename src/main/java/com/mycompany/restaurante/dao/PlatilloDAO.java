@@ -1,13 +1,13 @@
 package com.mycompany.restaurante.dao;
 
 import com.mycompany.restaurante.modelo.pojo.Platillo;
-import com.mycompany.restaurante.modelo.sql.OracleConnect; // Importación correcta
+import com.mycompany.restaurante.modelo.sql.OracleConnect;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Clase de Acceso a Datos (DAO) para la gestión del catálogo de platillos en Oracle Cloud.
+ * Clase de Acceso a Datos (DAO) para la gestión del catálogo de platillos 
  */
 public class PlatilloDAO {
     
@@ -35,7 +35,6 @@ public class PlatilloDAO {
 
     public List<Platillo> obtenerPlatillosActivos() throws SQLException {
         List<Platillo> lista = new ArrayList<>();
-        // Consulta adaptada para Oracle
         String sql = "SELECT p.*, a.stock AS stockDisponible " +
                      "FROM platillos p " +
                      "LEFT JOIN inventariomateriaprima a ON p.idInsumoClave = a.idMateriaPrima " +
