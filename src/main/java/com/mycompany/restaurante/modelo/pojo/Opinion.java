@@ -3,30 +3,39 @@ package com.mycompany.restaurante.modelo.pojo;
 import java.util.Date;
 import org.bson.types.ObjectId;
 
+/**
+ * Representa una opinión, queja o sugerencia enviada por un cliente.
+ * Contiene campos comunes y atributos específicos dependiendo del tipo de opinión.
+ */
 public class Opinion {
     private ObjectId id; 
     private String cliente;
     private Date fechaHora;
-    private String tipo; // "Comentario", "Queja", "Sugerencia"
+    private String tipo; // "Comentario", "Queja" o "Sugerencia"
     private String contenido;
-    // Identificador único para esta sesión de usuario
     private String idSesion;
 
-    // Específicos de Comentarios
+    // Atributos específicos para Comentarios
     private Integer calificacionEstrellas;
     private String mejorAspecto;
     private String emojiFinal;
 
-    // Específicos de Quejas
+    // Atributos específicos para Quejas
     private String tipoProblema;
     private String gravedad;
 
-    // Específicos de Sugerencias
+    // Atributos específicos para Sugerencias
     private String categoriaSugerencia;
     private String verloPronto;
 
+    /**
+     * Constructor vacío necesario para el mapeo de objetos en MongoDB.
+     */
     public Opinion() {}
 
+    /**
+     * Métodos para obtener y establecer los valores de los atributos de la opinión.
+     */
     public ObjectId getId() { return id; }
     public void setId(ObjectId id) { this.id = id; }
     public String getCliente() { return cliente; }
@@ -51,15 +60,6 @@ public class Opinion {
     public void setCategoriaSugerencia(String categoriaSugerencia) { this.categoriaSugerencia = categoriaSugerencia; }
     public String getVerloPronto() { return verloPronto; }
     public void setVerloPronto(String verloPronto) { this.verloPronto = verloPronto; }
-
-    public String getIdSesion() {
-        return idSesion;
-    }
-
-    public void setIdSesion(String idSesion) {
-        this.idSesion = idSesion;
-    }
-
-
-    
+    public String getIdSesion() { return idSesion; }
+    public void setIdSesion(String idSesion) { this.idSesion = idSesion; }
 }
