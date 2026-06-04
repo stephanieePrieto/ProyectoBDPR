@@ -25,16 +25,26 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.UUID;
 
+/**
+ * Controlador diseñado para interactuar con bases de datos orientadas a documentos (MongoDB).
+ * Administra el envío, visualización y gestión (CRUD) de Comentarios, Quejas y Sugerencias 
+ * a través de interfaces reactivas y generación de feeds estilo red social.
+ */
 public class OpinionesController implements Initializable {
 
     private final OpinionDAO opinionDAO = new OpinionDAO();
+    
+    // Generador de un identificador de sesión único para simular persistencia de usuario
+    // y permitir al cliente editar/borrar exclusivamente sus propias opiniones durante esta sesión.
     private final String idSesionUsuario = UUID.randomUUID().toString();
     
+    // Variables de estado del formulario interactivo
     private int estrellasSeleccionadas = 0;
     private String emojiSeleccionado = "serio"; 
     private String gravedadSeleccionada = "Baja"; 
     private String verloProntoSeleccionado = "SI"; 
 
+    // Recursos gráficos precargados para el sistema de calificación
     private final Image estrellaVacia = new Image(getClass().getResourceAsStream("/img/estrellaVacia.png"));
     private final Image estrellaLlena = new Image(getClass().getResourceAsStream("/img/estrellaLlena.png"));
 
@@ -45,8 +55,12 @@ public class OpinionesController implements Initializable {
     @FXML private ImageView imgStar1, imgStar2, imgStar3, imgStar4, imgStar5;
     @FXML private Button btnEmojiEnojado, btnEmojiTriste, btnEmojiNeutral, btnEmojiSerio, btnEmojiFeliz, btnEmojiFan;
     @FXML private Button btnBaja, btnMedia, btnAlta, btnSi, btnNo, btnAlgunDia;
-    @FXML private VBox VboxTarjetas;
+    @FXML private VBox VboxTarjetas; // Contenedor vertical del Feed de opiniones
 
+    /**
+     * Carga inicial de datos estructurados para los selectores del usuario, 
+     * asignación de listeners a los botones de reacción y carga del feed principal.
+     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         cbMejorAspecto.setItems(FXCollections.observableArrayList("Pizza", "Servicio", "Ambiente", "Rapidez", "Música"));
@@ -60,7 +74,8 @@ public class OpinionesController implements Initializable {
         mostrarComentarios(); 
     }
 
-    // --- NAVEGACIÓN Y FILTRADO ---
+    // --- MOTOR DE NAVEGACIÓN ENTRE CATEGORÍAS ---
+    
     @FXML private void mostrarComentarios(ActionEvent event) { mostrarComentarios(); }
     private void mostrarComentarios() {
         cambiarPanel(paneComentarios, paneQuejas, paneSugerencias);
@@ -79,42 +94,51 @@ public class OpinionesController implements Initializable {
         cargarFeedOpiniones("Sugerencia");
     }
 
+    /**
+     * Alterna la visibilidad booleana de los paneles para crear el flujo tipo Tab.
+     */
     private void cambiarPanel(Pane v, Pane h1, Pane h2) {
         v.setVisible(true); v.setManaged(true);
         h1.setVisible(false); h1.setManaged(false);
         h2.setVisible(false); h2.setManaged(false);
     }
 
-private void cargarFeedOpiniones(String filtro) {
+    /**
+     * Realiza una petición NoSQL al DAO para recuperar la colección de documentos, 
+     * iterándola para renderizar bloques gráficos (Tarjetas) por cada documento recuperado.
+     * @param filtro Permite solicitar únicamente opiniones que coincidan con la categoría actual.
+     */
+    private void cargarFeedOpiniones(String filtro) {
         VboxTarjetas.getChildren().clear();
         try {
             List<Opinion> historial = opinionDAO.obtainAllOpiniones();
             if (historial == null) return;
             
             for (Opinion o : historial) {
+                // Filtrado por categoría
                 if (filtro != null && !o.getTipo().equals(filtro)) continue;
 
-                VBox tarjeta = new VBox(6); // Mismo espaciado
+                VBox tarjeta = new VBox(6); 
                 tarjeta.setPrefWidth(370);
                 tarjeta.setMaxWidth(370);
-                tarjeta.setPadding(new Insets(12)); // Tu padding original
+                tarjeta.setPadding(new Insets(12)); 
 
-                // Estilo conservado exactamente como lo tenías
+                // Lógica de identidad visual: Asigna paletas de colores basadas en el sentimiento del ticket
                 String estiloComun = "-fx-border-width: 3; -fx-border-radius: 15; -fx-background-radius: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 6, 0, 0, 3);";
                 if (o.getTipo().equals("Comentario")) tarjeta.setStyle(estiloComun + "-fx-background-color: #E8F5E9; -fx-border-color: #81C784;");
                 else if (o.getTipo().equals("Queja")) tarjeta.setStyle(estiloComun + "-fx-background-color: #FFEBEE; -fx-border-color: #E57373;");
                 else tarjeta.setStyle(estiloComun + "-fx-background-color: #E3F2FD; -fx-border-color: #64B5F6;");
 
-                // 1. Encabezado (Arriba)
+                // 1. Encabezado de la Tarjeta
                 Label lblEncabezado = new Label("👤 " + o.getTipo().toUpperCase() + " - Anónimo");
                 lblEncabezado.setStyle("-fx-font-weight: bold; -fx-text-fill: #003366; -fx-font-size: 13px;");
 
-                // 2. Cuerpo (En medio)
+                // 2. Extracción y dibujado del contenido textual (Ajuste automático de texto largo)
                 Label lblCuerpo = new Label("💬 \"" + o.getContenido() + "\"");
                 lblCuerpo.setWrapText(true);
                 lblCuerpo.setStyle("-fx-text-fill: #37474F; -fx-font-size: 12px;");
 
-                // 3. Botones (Abajo, solo si es dueño)
+                // 3. Renderizado de Controles de Dueño (Privilegios mediante UUID)
                 HBox botones = new HBox(10);
                 botones.setAlignment(Pos.CENTER_RIGHT);
 
@@ -124,7 +148,7 @@ private void cargarFeedOpiniones(String filtro) {
                     botones.getChildren().addAll(btnEditar, btnEliminar);
                 }
 
-                // ORDEN FINAL QUE MANTIENE TU DISEÑO
+                // Ensamblaje e inserción al VBox principal
                 tarjeta.getChildren().addAll(lblEncabezado, lblCuerpo, botones);
                 VboxTarjetas.getChildren().add(tarjeta);
             
@@ -132,13 +156,19 @@ private void cargarFeedOpiniones(String filtro) {
         } catch (Exception ex) { ex.printStackTrace(); }
     }
 
-private Button crearBoton(String t, String c, javafx.event.EventHandler<ActionEvent> a) {
+    /**
+     * Utilidad de fábrica gráfica para la inserción de botones en las tarjetas dinámicas.
+     */
+    private Button crearBoton(String t, String c, javafx.event.EventHandler<ActionEvent> a) {
         Button b = new Button(t);
         b.setStyle("-fx-background-color: " + c + "; -fx-background-radius: 10; -fx-cursor: hand;");
         b.setOnAction(a);
         return b;
     }
 
+    /**
+     * Despliega un cuadro de diálogo permitiendo al dueño del documento alterar su contenido (Update NoSQL).
+     */
     private void abrirDialogoEdicion(Opinion o, String filtro) {
         TextInputDialog dialog = new TextInputDialog(o.getContenido());
         dialog.setTitle("Editar"); dialog.setHeaderText("Modificar opinión:");
@@ -148,16 +178,23 @@ private Button crearBoton(String t, String c, javafx.event.EventHandler<ActionEv
         });
     }
 
+    /**
+     * Concentrador de operaciones para salvar cualquier tipo de documento en la base de datos, 
+     * inyectándole metadatos compartidos.
+     */
     private void procesarGuardado(Opinion op) {
         op.setFechaHora(new Date());
         op.setCliente("Anónimo");
-        op.setIdSesion(idSesionUsuario); // Guarda la sesión
+        op.setIdSesion(idSesionUsuario); // Firma electrónica del equipo cliente
+        
         if (opinionDAO.registrarOpinion(op)) {
             mostrarAlerta("Éxito", "Enviado con éxito", Alert.AlertType.INFORMATION);
             limpiarCampos();
             cargarFeedOpiniones(op.getTipo());
         }
     }
+
+    // --- ACCIONES DE FORMULARIOS ---
 
     @FXML
     private void clicEnviarComentario(ActionEvent event) {
@@ -219,6 +256,8 @@ private Button crearBoton(String t, String c, javafx.event.EventHandler<ActionEv
 
         procesarGuardado(op);
     }
+
+    // --- CONFIGURACIÓN DE COMPONENTES DE INTERFAZ REACTIVA ---
 
     private void configurarEstrellas() {
         imgStar1.setOnMouseClicked(e -> actualizarEstrellasVisuales(1));
@@ -291,5 +330,3 @@ private Button crearBoton(String t, String c, javafx.event.EventHandler<ActionEv
         } catch (IOException e) { e.printStackTrace(); }
     }
 }
-
-

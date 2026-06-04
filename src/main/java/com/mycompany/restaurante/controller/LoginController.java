@@ -25,7 +25,6 @@ import javafx.stage.Stage;
  * Implementa una puerta de enlace bifurcada para procesar inicios de sesión tanto de clientes 
  * como de empleados, inyectando las sesiones en memoria y enrutando al usuario a la vista 
  * correspondiente según su nivel de privilegios y rol.
- * * @author Ricardo, Diego, Angel, Stephy
  */
 public class LoginController {
 
@@ -39,8 +38,8 @@ public class LoginController {
      * Captura y valida los datos iniciales del formulario de acceso.
      * Actúa como filtro primario validando campos vacíos y selección de perfil, para evitar 
      * consultas nulas a la base de datos.
-     * Nota Técnica (Seguridad): Purga preventivamente cualquier variable de sesión global 
-     * antes de intentar una nueva autenticación para evitar cruce de credenciales.
+     * * Nota Técnica (Seguridad): Purga preventivamente cualquier variable de sesión global 
+     * antes de intentar una nueva autenticación para evitar cruce de credenciales o secuestro de sesión.
      * * @param event El evento disparado al presionar el botón "Ingresar".
      */
     @FXML
@@ -58,7 +57,7 @@ public class LoginController {
             return;
         }
 
-        // LIMPIAMOS SESIONES POR SEGURIDAD ANTES DE ENTRAR
+        // Limpieza estricta del entorno de sesión
         App.usuarioLogueado = null;
         App.idClienteLogueado = null;
 
@@ -84,7 +83,7 @@ public class LoginController {
              PreparedStatement ps = con.prepareStatement(sql)) {
             
             if (con == null) {
-                throw new SQLException("No se pudo establecer comunicación con el servidor local de MySQL.");
+                throw new SQLException("No se pudo establecer comunicación con el servidor de bases de datos.");
             }
             
             ps.setString(1, idCliente);
@@ -92,9 +91,7 @@ public class LoginController {
             
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    System.out.println("¡Acceso de Cliente exitoso!");
-                    
-                    // --- AQUÍ ESTÁ LA MAGIA: GUARDAMOS EL ID DEL CLIENTE EN LA MEMORIA GLOBAL ---
+                    // Instanciación de la sesión global para el cliente
                     App.idClienteLogueado = idCliente;
                     
                     FXMLLoader loader = App.getFXMLLoader("VerMenuCliente");
@@ -122,7 +119,7 @@ public class LoginController {
     /**
      * Procesa la autenticación para el personal interno mediante la capa de acceso a datos (DAO).
      * En caso de éxito, inicializa el objeto global del empleado y delega el enrutamiento 
-     * al método encargado de distribuir la interfaz operativa.
+     * al método encargado de distribuir la interfaz operativa según el Control de Acceso Basado en Roles (RBAC).
      * * @param user El nombre de usuario de acceso del empleado.
      * @param pass La contraseña de seguridad.
      */
@@ -148,9 +145,9 @@ public class LoginController {
     /**
      * Orquesta el enrutamiento post-login para el personal administrativo y operativo.
      * Aplica una regla de negocio de segregación: aísla el rol de 'Chef' enrutándolo directamente 
-     * a su visualizador de comandas, mientras dirige al resto del staff al panel de control central (Dashboard),
-     * pasándoles sus credenciales para levantar el RBAC (Permisos).
-     * * @param usuario El objeto de empleado validado a inyectar en las siguientes vistas.
+     * a su visualizador de comandas (KDS), mientras dirige al resto del staff al panel de control central (Dashboard),
+     * inyectándoles sus credenciales para evaluar los permisos visuales.
+     * * @param usuario El objeto de empleado validado.
      */
     private void entrarAlDashboard(Usuario usuario) {
         String fxmlParaCargar = "";
@@ -188,7 +185,7 @@ public class LoginController {
 
     /**
      * Redirige al flujo de alta para comensales nuevos (Walk-ins o clientes sin ID).
-     * Carga el FXML para solicitar los datos básicos y asignar un identificador formal en la DB.
+     * Carga el FXML para solicitar los datos básicos y asignar un identificador formal en la base de datos.
      * * @param event El evento disparado al presionar el botón "Registrarse".
      */
     @FXML

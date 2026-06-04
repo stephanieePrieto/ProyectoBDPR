@@ -1,4 +1,3 @@
-// FACTURA CONTROLLER
 package com.mycompany.restaurante.controller;
 
 import com.mycompany.restaurante.App;
@@ -29,7 +28,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 
 import javafx.stage.Stage;
 
-// estos imports sirven para el pdf
+// Importaciones requeridas para la generación de documentos PDF con iText 7
 import com.itextpdf.io.font.constants.StandardFonts;
 import com.itextpdf.kernel.colors.ColorConstants;
 import com.itextpdf.kernel.colors.DeviceRgb;
@@ -39,7 +38,7 @@ import com.itextpdf.kernel.geom.PageSize;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 
-// estos igual son para el pdf pero en especifico son los que hacen que salga todo como tabla
+// Importaciones estructurales de iText para maquetación en formato tabla
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.borders.Border;
 import com.itextpdf.layout.borders.SolidBorder;
@@ -54,12 +53,10 @@ import com.itextpdf.layout.property.UnitValue;
  * Gestiona la captura de datos fiscales del cliente (RFC, Régimen, Uso CFDI),
  * recupera el desglose de consumos de una mesa específica y compila físicamente
  * un comprobante fiscal en formato PDF utilizando la librería iText.
- * 
- * @author Ricardo, Diego, Angel, Stephi
  */
 public class FacturaController implements Initializable {
 
-    // datos del cliente
+    // --- Datos Fiscales del Receptor ---
     @FXML private TextField txtRFC;
     @FXML private TextField txtNombre;
     @FXML private TextField txtCP;
@@ -67,13 +64,13 @@ public class FacturaController implements Initializable {
     @FXML private ComboBox<String> cbUsoCFDI;
     @FXML private ComboBox<String> cbRegimenReceptor;
 
-    // datos generales de la factura
+    // --- Datos Generales del Comprobante ---
     @FXML private TextField txtFolio;
     @FXML private TextField txtFecha;
     @FXML private ComboBox<String> cbFormaPago;
     @FXML private ComboBox<Integer> cbMesaFactura;
 
-    // tabla donde se muestran los productos de la mesa
+    // --- Estructura de la Tabla de Consumos ---
     @FXML private TableView<DetalleFactura> tvFactura;
     @FXML private TableColumn<DetalleFactura, String> colClave;
     @FXML private TableColumn<DetalleFactura, Integer> colCantidad;
@@ -82,23 +79,26 @@ public class FacturaController implements Initializable {
     @FXML private TableColumn<DetalleFactura, Double> colPrecio;
     @FXML private TableColumn<DetalleFactura, Double> colTotal;
 
-    // campos que quedaron del diseño original
+    // --- Remanentes de la UI ---
     @FXML private ComboBox<String> cbAgregarConcepto;
     @FXML private TextField txtConceptoConsumo;
     @FXML private ComboBox<String> cbRegimenFiscalAbajo;
 
-    // totales de la factura
+    // --- Totales Financieros ---
     @FXML private TextField txtSubtotal;
     @FXML private TextField txtIVA;
     @FXML private TextField txtTotalGeneral;
 
-    // botones
     @FXML private Button btnVolver;
     @FXML private Button btnGenerarFactura;
 
     private int idMesa;
     private DetalleFacturaDAO dao = new DetalleFacturaDAO();
 
+    /**
+     * Prepara el entorno al inicializar la vista, poblando los selectores fiscales 
+     * y configurando los listeners automáticos para la selección de mesas.
+     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         configurarCombos();
@@ -107,7 +107,10 @@ public class FacturaController implements Initializable {
         configurarTabla();
     }
 
-    // aqui se llenan los combos de la factura
+    /**
+     * Llena los catálogos del SAT en los ComboBox correspondientes (Uso de CFDI, 
+     * Régimen Fiscal y Forma de Pago) estableciendo valores por defecto comunes.
+     */
     private void configurarCombos() {
         cbUsoCFDI.getItems().addAll(
             "G01 - Adquisición de mercancías",
@@ -135,7 +138,9 @@ public class FacturaController implements Initializable {
         cbFormaPago.setValue("01 - Efectivo");
     }
 
-    // fecha automática y folio sencillo
+    /**
+     * Inyecta la marca de tiempo actual del sistema operativo y genera un folio interno aleatorio.
+     */
     private void configurarFechaFolio() {
         DateTimeFormatter formato = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         txtFecha.setText(LocalDateTime.now().format(formato));
@@ -145,20 +150,21 @@ public class FacturaController implements Initializable {
         }
     }
 
-    // llena el combo de mesas y carga la factura al seleccionar una
+    /**
+     * Prepara el listado de mesas disponibles y adjunta un evento reactivo que 
+     * consulta a la base de datos cada vez que se cambia de mesa seleccionada.
+     */
     private void configurarMesas() {
         if (cbMesaFactura == null) {
             return;
         }
-
         cbMesaFactura.getItems().clear();
-
         for (int i = 1; i <= 12; i++) {
             cbMesaFactura.getItems().add(i);
         }
-
         cbMesaFactura.setPromptText("Mesas");
 
+        // Dispara la carga de datos de la factura al seleccionar la mesa
         cbMesaFactura.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
                 inicializarFactura(newVal);
@@ -166,7 +172,10 @@ public class FacturaController implements Initializable {
         });
     }
 
-    // columnas de la tabla de factura
+    /**
+     * Enlaza las propiedades del modelo de datos POJO (DetalleFactura) con las 
+     * columnas gráficas para que JavaFX pueda renderizarlas automáticamente.
+     */
     private void configurarTabla() {
         colClave.setCellValueFactory(new PropertyValueFactory<>("claveProdServ"));
         colCantidad.setCellValueFactory(new PropertyValueFactory<>("cantidad"));
@@ -176,15 +185,21 @@ public class FacturaController implements Initializable {
         colTotal.setCellValueFactory(new PropertyValueFactory<>("total"));
     }
 
+    /**
+     * Orquesta la generación del PDF. Valida el formato del RFC mediante Expresiones Regulares, 
+     * configura la hoja de estilos de iText y renderiza la factura física a disco.
+     */
     @FXML
     private void btnGenerarFacturaAction() {
         String rfc = obtenerTexto(txtRFC).trim().toUpperCase();
 
+        // Validación Regex estándar para RFCs mexicanos (Físicos o Morales)
         if (!rfc.matches("[A-ZÑ&]{3,4}\\d{6}[A-Z0-9]{3}")) {
             mostrarAlerta("RFC inválido", "Formato incorrecto.\nEjemplo: ABCD010203EF1");
             return;
         }
 
+        // Validación de consumo activo
         if (tvFactura.getItems().isEmpty()) {
             mostrarAlerta("Sin productos", "Selecciona una mesa con consumo antes de generar la factura.");
             return;
@@ -193,22 +208,23 @@ public class FacturaController implements Initializable {
         try {
             String ruta = "Factura_" + rfc + ".pdf";
 
+            // Inicialización de flujos de iText
             PdfWriter writer = new PdfWriter(ruta);
             PdfDocument pdf = new PdfDocument(writer);
             pdf.setDefaultPageSize(PageSize.A4);
-
             Document document = new Document(pdf);
-            document.setMargins(25, 25, 25, 25);
+            document.setMargins(25, 25, 25, 25); // Márgenes corporativos
 
+            // Paleta tipográfica y de colores
             PdfFont fontNormal = PdfFontFactory.createFont(StandardFonts.HELVETICA);
             PdfFont fontBold = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
-
             DeviceRgb azul = new DeviceRgb(0, 91, 150);
             DeviceRgb grisClaro = new DeviceRgb(240, 240, 240);
             DeviceRgb grisBorde = new DeviceRgb(160, 160, 160);
 
             document.setFont(fontNormal);
 
+            // Construcción modular del documento
             agregarEncabezado(document, fontNormal, fontBold, azul);
             agregarDatosCliente(document, fontNormal, fontBold, azul, grisBorde, rfc);
             agregarDatosComprobante(document, fontNormal, fontBold, azul);
@@ -216,6 +232,7 @@ public class FacturaController implements Initializable {
             agregarTotales(document, fontNormal, fontBold, grisClaro, grisBorde);
             agregarSello(document, fontNormal, fontBold, grisBorde);
 
+            // Nota al pie
             document.add(new Paragraph("Este comprobante fue generado por Pizzatron CP para fines demostrativos.")
                 .setFont(fontNormal)
                 .setFontSize(7)
@@ -223,8 +240,8 @@ public class FacturaController implements Initializable {
 
             document.close();
 
+            // Llamada al sistema operativo para abrir el archivo
             java.awt.Desktop.getDesktop().open(new java.io.File(ruta));
-
             mostrarAlerta("Éxito", "Factura PDF generada correctamente.");
 
         } catch (Exception e) {
@@ -233,7 +250,9 @@ public class FacturaController implements Initializable {
         }
     }
 
-    // encabezado principal del PDF
+    /**
+     * Construye la sección del Emisor y el cuadro de tipo de documento (Factura de Ingreso).
+     */
     private void agregarEncabezado(Document document, PdfFont fontNormal, PdfFont fontBold, DeviceRgb azul) {
         Table encabezado = new Table(UnitValue.createPercentArray(new float[]{70, 30}));
         encabezado.setWidth(UnitValue.createPercentValue(100));
@@ -256,10 +275,12 @@ public class FacturaController implements Initializable {
         encabezado.addCell(datosFactura);
 
         document.add(encabezado);
-        document.add(new Paragraph(" ").setFontSize(4));
+        document.add(new Paragraph(" ").setFontSize(4)); // Espaciador
     }
 
-    // datos del receptor o cliente
+    /**
+     * Mapea en el PDF los datos del receptor ingresados en la interfaz gráfica.
+     */
     private void agregarDatosCliente(Document document, PdfFont fontNormal, PdfFont fontBold, DeviceRgb azul, DeviceRgb grisBorde, String rfc) {
         Table receptor = new Table(UnitValue.createPercentArray(new float[]{100}));
         receptor.setWidth(UnitValue.createPercentValue(100));
@@ -292,7 +313,9 @@ public class FacturaController implements Initializable {
         document.add(new Paragraph(" ").setFontSize(4));
     }
 
-    // forma de pago, metodo, moneda y lugar
+    /**
+     * Dibuja los metadatos de la transacción (Moneda, Forma de Pago, Lugar de Expedición).
+     */
     private void agregarDatosComprobante(Document document, PdfFont fontNormal, PdfFont fontBold, DeviceRgb azul) {
         Table comprobante = new Table(UnitValue.createPercentArray(new float[]{25, 25, 25, 25}));
         comprobante.setWidth(UnitValue.createPercentValue(100));
@@ -305,13 +328,16 @@ public class FacturaController implements Initializable {
         comprobante.addCell(celdaDato(valorCombo(cbFormaPago), fontNormal));
         comprobante.addCell(celdaDato("PUE - Pago en una sola exhibición", fontNormal));
         comprobante.addCell(celdaDato("MXN", fontNormal));
-        comprobante.addCell(celdaDato("91000", fontNormal));
+        comprobante.addCell(celdaDato("91000", fontNormal)); // Xalapa, Veracruz
 
         document.add(comprobante);
         document.add(new Paragraph(" ").setFontSize(4));
     }
 
-    // tabla con los platillos o productos consumidos
+    /**
+     * Itera los elementos visuales del TableView (el consumo actual de la mesa) 
+     * e imprime renglón por renglón el detalle fiscal.
+     */
     private void agregarTablaProductos(Document document, PdfFont fontNormal, PdfFont fontBold, DeviceRgb azul) {
         Table tablaProductos = new Table(UnitValue.createPercentArray(new float[]{14, 10, 12, 34, 15, 15}));
         tablaProductos.setWidth(UnitValue.createPercentValue(100));
@@ -336,7 +362,9 @@ public class FacturaController implements Initializable {
         document.add(new Paragraph(" ").setFontSize(4));
     }
 
-    // totales de la factura
+    /**
+     * Muestra el resumen financiero de la factura (Subtotal, impuestos trasladados y Total neto).
+     */
     private void agregarTotales(Document document, PdfFont fontNormal, PdfFont fontBold, DeviceRgb grisClaro, DeviceRgb grisBorde) {
         Table totales = new Table(UnitValue.createPercentArray(new float[]{65, 20, 15}));
         totales.setWidth(UnitValue.createPercentValue(100));
@@ -366,7 +394,10 @@ public class FacturaController implements Initializable {
         document.add(new Paragraph(" ").setFontSize(4));
     }
 
-    // parte final tipo sello/QR simulado
+    /**
+     * Renderiza el bloque gráfico correspondiente a las cadenas criptográficas (Sello Digital) 
+     * y el código QR requeridos por el esquema de facturación.
+     */
     private void agregarSello(Document document, PdfFont fontNormal, PdfFont fontBold, DeviceRgb grisBorde) {
         Table sello = new Table(UnitValue.createPercentArray(new float[]{25, 75}));
         sello.setWidth(UnitValue.createPercentValue(100));
@@ -389,7 +420,10 @@ public class FacturaController implements Initializable {
         document.add(sello);
     }
 
-    // se manda llamar cuando se selecciona una mesa
+    /**
+     * Invoca la base de datos para cargar los platillos de una mesa y calcular la base impositiva.
+     * @param idMesa Identificador de la mesa a facturar.
+     */
     public void inicializarFactura(int idMesa) {
         this.idMesa = idMesa;
 
@@ -404,7 +438,9 @@ public class FacturaController implements Initializable {
         txtTotalGeneral.setText(String.format("%.2f", total));
     }
 
-    // boton para regresar al dashboard
+    /**
+     * Gestiona el retorno al panel de control (Dashboard).
+     */
     @FXML
     void volverDashboard(ActionEvent event) {
         try {
@@ -418,7 +454,8 @@ public class FacturaController implements Initializable {
         }
     }
 
-    // celdas azules para titulos de tablas
+    // --- MÉTODOS DE RENDERIZADO VISUAL PARA iText ---
+
     private Cell celdaTituloAzul(String texto, PdfFont fuente, DeviceRgb colorFondo) {
         return new Cell()
             .add(new Paragraph(texto).setFont(fuente).setFontSize(8).setFontColor(ColorConstants.WHITE).setTextAlignment(TextAlignment.CENTER))
@@ -426,7 +463,6 @@ public class FacturaController implements Initializable {
             .setBorder(new SolidBorder(colorFondo, 1));
     }
 
-    // celdas de etiqueta, como RFC, Cliente, Total, etc.
     private Cell celdaEtiqueta(String texto, PdfFont fuente) {
         return new Cell()
             .add(new Paragraph(texto).setFont(fuente).setFontSize(8))
@@ -434,39 +470,34 @@ public class FacturaController implements Initializable {
             .setBorder(new SolidBorder(new DeviceRgb(160, 160, 160), 1));
     }
 
-    // celdas normales con información
     private Cell celdaDato(String texto, PdfFont fuente) {
         if (texto == null) {
             texto = "";
         }
-
         return new Cell()
             .add(new Paragraph(texto).setFont(fuente).setFontSize(8))
             .setBorder(new SolidBorder(new DeviceRgb(160, 160, 160), 1));
     }
 
-    // celdas para importes alineados a la derecha
     private Cell celdaImporte(String texto, PdfFont fuente) {
         return new Cell()
             .add(new Paragraph(texto).setFont(fuente).setFontSize(8).setTextAlignment(TextAlignment.RIGHT))
             .setBorder(new SolidBorder(new DeviceRgb(160, 160, 160), 1));
     }
 
-    // evita errores si un TextField viene vacío o no existe
+    // --- MÉTODOS DE SEGURIDAD PARA LA UI ---
+
     private String obtenerTexto(TextField campo) {
         if (campo == null || campo.getText() == null) {
             return "";
         }
-
         return campo.getText();
     }
 
-    // evita errores si un ComboBox no tiene valor seleccionado
     private String valorCombo(ComboBox<String> combo) {
         if (combo == null || combo.getValue() == null) {
             return "";
         }
-
         return combo.getValue();
     }
 

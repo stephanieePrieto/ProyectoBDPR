@@ -25,18 +25,25 @@ import java.sql.Statement;
 /**
  * Controlador del sistema de visualización de cocina (KDS).
  * Migrado a Oracle Cloud.
- * @author Ricardo, Diego, Angel, Stephy
  */
 public class ChefController implements Initializable {
 
     @FXML private HBox panelComandas;
 
+    /**
+     * Inicializa el monitor de la cocina cargando los tickets base e invoca un hilo 
+     * concurrente (Timeline) que refrescará las comandas automáticamente.
+     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         cargarComandasActivas();
         configurarRefrescoAutomatico();   
     }   
 
+    /**
+     * Configura el motor de recarga para realizar polling a la Base de Datos
+     * cada 8 segundos con la finalidad de simular un entorno asíncrono/RealTime.
+     */
     private void configurarRefrescoAutomatico() {
         Timeline temporizador = new Timeline(
                 new KeyFrame(Duration.seconds(8), event -> {
@@ -52,45 +59,52 @@ public class ChefController implements Initializable {
         cargarComandasActivas();
     }
 
-public void cargarComandasActivas() {
-    panelComandas.getChildren().clear(); 
-    
-    // CORRECCIÓN: Accedemos a los atributos dentro del objeto 'info'.
-    // Si creaste la vista 'vista_pedidos_plana', usa esa vista.
-    // Si no, accede directo al objeto:
-// Cambia la consulta a esta:
-    String sqlPedidos = "SELECT idPedido, idMesa, TO_CHAR(FECHA_HORA, 'HH:MI:SS AM') as hora "
-                  + "FROM vista_pedidos_plana "
-                  + "WHERE ESTADO = 'Pendiente' "
-                  + "ORDER BY FECHA_HORA ASC";
-    
-    try (Connection con = OracleConnect.getConexion()) {
-        if (con == null) return;
+    /**
+     * Recaba las órdenes pendientes desde una vista pre-procesada de la base de datos, 
+     * inyectando dinámicamente un nodo FXML (TarjetaPedido) por cada solicitud activa en el HBox.
+     */
+    public void cargarComandasActivas() {
+        panelComandas.getChildren().clear(); 
         
-        try (PreparedStatement psPedidos = con.prepareStatement(sqlPedidos);
-             ResultSet rsPedidos = psPedidos.executeQuery()) {
+        // CORRECCIÓN: Accedemos a los atributos dentro de la vista 'vista_pedidos_plana' de Oracle
+        String sqlPedidos = "SELECT idPedido, idMesa, TO_CHAR(FECHA_HORA, 'HH:MI:SS AM') as hora "
+                      + "FROM vista_pedidos_plana "
+                      + "WHERE ESTADO = 'Pendiente' "
+                      + "ORDER BY FECHA_HORA ASC";
+        
+        try (Connection con = OracleConnect.getConexion()) {
+            if (con == null) return;
             
-            while (rsPedidos.next()) {
-                int idPedido = rsPedidos.getInt("idPedido");
-                int idMesa = rsPedidos.getInt("idMesa");
-                String hora = rsPedidos.getString("hora");
+            try (PreparedStatement psPedidos = con.prepareStatement(sqlPedidos);
+                 ResultSet rsPedidos = psPedidos.executeQuery()) {
                 
-                String textoPlatillos = obtenerDetallesTexto(con, idPedido);
-                
-                FXMLLoader loader = App.getFXMLLoader("TarjetaPedido");
-                Parent tarjeta = loader.load();
+                while (rsPedidos.next()) {
+                    int idPedido = rsPedidos.getInt("idPedido");
+                    int idMesa = rsPedidos.getInt("idMesa");
+                    String hora = rsPedidos.getString("hora");
+                    
+                    String textoPlatillos = obtenerDetallesTexto(con, idPedido);
+                    
+                    FXMLLoader loader = App.getFXMLLoader("TarjetaPedido");
+                    Parent tarjeta = loader.load();
 
-                TarjetaPedidoController tarjetaCtrl = loader.getController();
-                tarjetaCtrl.configurarTarjeta(idPedido, idMesa, hora, textoPlatillos, this);
-                
-                panelComandas.getChildren().add(tarjeta);
+                    TarjetaPedidoController tarjetaCtrl = loader.getController();
+                    tarjetaCtrl.configurarTarjeta(idPedido, idMesa, hora, textoPlatillos, this);
+                    
+                    panelComandas.getChildren().add(tarjeta);
+                }
             }
+        } catch (SQLException | IOException e) {
+            e.printStackTrace();
         }
-    } catch (SQLException | IOException e) {
-        e.printStackTrace();
     }
-}
 
+    /**
+     * Ensambla una cadena informativa agrupando los platillos bajo un mismo ID de Pedido.
+     * @param con Conexión activa a la BD Oracle
+     * @param idPedido El número general del pedido a desglosar
+     * @return El string final con notas especiales procesadas y estructuradas.
+     */
     private String obtenerDetallesTexto(Connection con, int idPedido) throws SQLException {
         StringBuilder sb = new StringBuilder();
         String notaGeneral = "";
@@ -107,6 +121,7 @@ public void cargarComandasActivas() {
                     int cant = rs.getInt("cantidad");
                     String notaEspecial = rs.getString("estadoPlatillo");
                     
+                    // Condicional para destacar observaciones en cocina (Ej: "SIN CEBOLLA")
                     if (notaEspecial != null 
                             && !notaEspecial.trim().isEmpty() 
                             && !notaEspecial.equalsIgnoreCase("Normal")) {
@@ -126,61 +141,63 @@ public void cargarComandasActivas() {
         return sb.toString();
     }
 
-@FXML
-private void clicVerConsolaAvanzada(ActionEvent event) {
-    StringBuilder sb = new StringBuilder();
-    sb.append("--- DIAGNÓSTICO POST-RELACIONAL ---\n\n");
-    
-    try (Connection con = OracleConnect.getConexion()) {
-        AvanzadoDAO avDao = new AvanzadoDAO(con);
+    /**
+     * Módulo de diagnóstico avanzado. Demuestra conceptos de bases de datos 
+     * Objeto-Relacionales, accediendo a objetos Struct en Oracle Cloud para desglosar herencias.
+     */
+    @FXML
+    private void clicVerConsolaAvanzada(ActionEvent event) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("--- DIAGNÓSTICO POST-RELACIONAL ---\n\n");
         
-        // 1. Mostrar Herencia
-        sb.append("1. Pizzas con Herencia (Pizza_T):\n");
-        for(PlatilloAvanzado p : avDao.obtenerPizzasAvanzadas()) {
-            sb.append("- ").append(p.getNombre()).append(" | Masa: ").append(p.getTipoMasa()).append("\n");
-        }
-        
-// 2. Mostrar Coordenadas de Mesas (Tipo objeto coordenadas_typ)
-sb.append("\n2. Ubicación de Mesas (coordenadas_typ):\n");
-// Consulta solo el objeto, no intentes acceder a sus campos internos en el SQL
-String sqlMesas = "SELECT numero, posicion FROM mesa"; 
-
-try(java.sql.Statement st = con.createStatement(); ResultSet rs = st.executeQuery(sqlMesas)) {
-    while(rs.next()){
-        int numero = rs.getInt("numero");
-        
-        // Extraemos la columna como un objeto 'Struct'
-        java.sql.Struct objPosicion = (java.sql.Struct) rs.getObject("posicion");
-        
-        if (objPosicion != null) {
-            Object[] atributos = objPosicion.getAttributes();
-            // Asumiendo que el orden en coordenadas_typ es: 1. mapa_x, 2. mapa_y
-            // Los valores suelen venir como BigDecimal
-            int x = ((java.math.BigDecimal) atributos[0]).intValue();
-            int y = ((java.math.BigDecimal) atributos[1]).intValue();
+        try (Connection con = OracleConnect.getConexion()) {
+            AvanzadoDAO avDao = new AvanzadoDAO(con);
             
-            sb.append("Mesa #").append(numero)
-              .append(" (X:").append(x).append(", Y:").append(y).append(")\n");
-        } else {
-            sb.append("Mesa #").append(numero).append(" (Sin coordenadas)\n");
+            // 1. Mostrar Herencia de la base de datos (Ejecuta mapeos desde objetos PL/SQL)
+            sb.append("1. Pizzas con Herencia (Pizza_T):\n");
+            for(PlatilloAvanzado p : avDao.obtenerPizzasAvanzadas()) {
+                sb.append("- ").append(p.getNombre()).append(" | Masa: ").append(p.getTipoMasa()).append("\n");
+            }
+            
+            // 2. Mostrar Coordenadas de Mesas (Tipo objeto coordenadas_typ)
+            sb.append("\n2. Ubicación de Mesas (coordenadas_typ):\n");
+            String sqlMesas = "SELECT numero, posicion FROM mesa"; 
+
+            try(java.sql.Statement st = con.createStatement(); ResultSet rs = st.executeQuery(sqlMesas)) {
+                while(rs.next()){
+                    int numero = rs.getInt("numero");
+                    
+                    // Extraemos la columna tipificada como un objeto 'Struct' (java.sql.Struct)
+                    java.sql.Struct objPosicion = (java.sql.Struct) rs.getObject("posicion");
+                    
+                    if (objPosicion != null) {
+                        // Accedemos a las variables internas de la Estructura en Oracle Cloud (mapa_x y mapa_y)
+                        Object[] atributos = objPosicion.getAttributes();
+                        int x = ((java.math.BigDecimal) atributos[0]).intValue();
+                        int y = ((java.math.BigDecimal) atributos[1]).intValue();
+                        
+                        sb.append("Mesa #").append(numero)
+                          .append(" (X:").append(x).append(", Y:").append(y).append(")\n");
+                    } else {
+                        sb.append("Mesa #").append(numero).append(" (Sin coordenadas)\n");
+                    }
+                }
+            }
+            
+            mostrarAlertaExito("Consola Avanzada Oracle", sb.toString());
+            
+        } catch (SQLException e) {
+            mostrarAlerta("Error", "Fallo al consultar estructuras avanzadas: " + e.getMessage());
         }
     }
-}
-        
-        mostrarAlertaExito("Consola Avanzada Oracle", sb.toString());
-        
-    } catch (SQLException e) {
-        mostrarAlerta("Error", "Fallo al consultar estructuras avanzadas: " + e.getMessage());
+
+    private void mostrarAlerta(String t, String m) {
+        javafx.scene.control.Alert a = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING);
+        a.setTitle(t); a.setHeaderText(null); a.setContentText(m); a.showAndWait();
     }
-}
 
-private void mostrarAlerta(String t, String m) {
-    javafx.scene.control.Alert a = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING);
-    a.setTitle(t); a.setHeaderText(null); a.setContentText(m); a.showAndWait();
-}
-
-private void mostrarAlertaExito(String t, String m) {
-    javafx.scene.control.Alert a = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
-    a.setTitle(t); a.setHeaderText(null); a.setContentText(m); a.showAndWait();
-}
+    private void mostrarAlertaExito(String t, String m) {
+        javafx.scene.control.Alert a = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
+        a.setTitle(t); a.setHeaderText(null); a.setContentText(m); a.showAndWait();
+    }
 }

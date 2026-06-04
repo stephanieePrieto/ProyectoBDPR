@@ -3,7 +3,7 @@ package com.mycompany.restaurante.controller;
 import com.mycompany.restaurante.App;
 import com.mycompany.restaurante.dao.PlatilloDAO;
 import com.mycompany.restaurante.modelo.pojo.Platillo;
-import com.mycompany.restaurante.modelo.sql.OracleConnect; // Cambio a Oracle
+import com.mycompany.restaurante.modelo.sql.OracleConnect; 
 import java.io.IOException;
 import java.net.URL;
 import java.sql.Connection;
@@ -27,23 +27,29 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 /**
- * Controlador de la interfaz gráfica del Menú Digital para Clientes.
- * Migrado a arquitectura Oracle Cloud.
- * @author Ricardo, Diego, Angel, Stephy
+ * Controlador de la interfaz gráfica del Menú Digital interactivo para Clientes.
+ * Emplea renderizado dinámico de nodos FXML para dibujar las tarjetas de los platillos 
+ * extraídos desde Oracle Cloud.
  */
 public class MenuClienteController implements Initializable {
 
+    // Contenedores matriciales segregados por tipo de alimento
     @FXML private GridPane gridBebidas;
     @FXML private GridPane gridEspeciales;
     @FXML private GridPane gridExtras;
     @FXML private GridPane gridPasteles;
     @FXML private GridPane gridPizza;
 
+    /**
+     * Prepara el entorno gráfico, limpiando restricciones previas en los GridPanes 
+     * e inicializando las proporciones estandarizadas para las tarjetas de productos.
+     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         GridPane[] todosLosGrids = {
             gridPizza, gridBebidas, gridPasteles, gridExtras, gridEspeciales
         };
+        
         for (GridPane grid : todosLosGrids) {
             if (grid != null) {
                 grid.getChildren().clear();
@@ -56,6 +62,7 @@ public class MenuClienteController implements Initializable {
                 grid.setHgap(20);
                 grid.setVgap(20);
                 
+                // Forzamos un layout de 3 columnas para mantener la simetría del catálogo
                 for (int i = 0; i < 3; i++) {
                     ColumnConstraints cc = new ColumnConstraints();
                     cc.setPrefWidth(190); 
@@ -67,13 +74,18 @@ public class MenuClienteController implements Initializable {
         mostrarGrid("Pizzas");
     }
 
+    /**
+     * Interroga a Oracle Cloud para extraer únicamente los platillos marcados como 'Disponibles'.
+     * Itera sobre el ResultSet e invoca la creación de tarjetas visuales, colocándolas 
+     * matemáticamente en la fila/columna correcta según su categoría.
+     */
     private void cargarMenuDinamico() {
-        // Conexión a Oracle
         try (Connection conexion = OracleConnect.getConexion()) {
             if (conexion != null) {
                 PlatilloDAO dao = new PlatilloDAO(conexion);
                 List<Platillo> activos = dao.obtenerPlatillosActivos();
 
+                // Contadores independientes de coordenadas (columna, fila) para cada panel
                 int colP = 0, rowP = 0;
                 int colB = 0, rowB = 0;
                 int colPa = 0, rowPa = 0;
@@ -83,9 +95,11 @@ public class MenuClienteController implements Initializable {
                 for (Platillo p : activos) {
                     VBox tarjeta = crearTarjetaPlatillo(p);
                     
+                    // Escudo anti-vacíos para la categoría
                     int cat = p.getIdCategoria(); 
                     if (cat < 1 || cat > 5) cat = 1;
 
+                    // Distribución física en pantalla
                     switch (cat) {
                         case 1: 
                             gridPizza.add(tarjeta, colP, rowP);
@@ -115,6 +129,12 @@ public class MenuClienteController implements Initializable {
         }
     }
 
+    /**
+     * Moldea a nivel de código (sin FXML secundario) la apariencia de un platillo, 
+     * asignando sombras, bordes y resolviendo la ruta de la imagen local.
+     * @param p Instancia de datos del platillo a dibujar.
+     * @return Nodo VBox formateado y listo para incrustar.
+     */
     private VBox crearTarjetaPlatillo(Platillo p) {
         VBox tarjeta = new VBox();
         tarjeta.setAlignment(Pos.CENTER);
@@ -136,6 +156,7 @@ public class MenuClienteController implements Initializable {
         imgPlatillo.setFitWidth(120);
         imgPlatillo.setPreserveRatio(true);
         
+        // Sistema de Fallback de imágenes: Si la ruta no existe, carga default.png
         try {
             String nombreImagen = p.getImagen();
             if (nombreImagen == null || nombreImagen.trim().isEmpty()) nombreImagen = "default.png";
@@ -160,6 +181,10 @@ public class MenuClienteController implements Initializable {
         return tarjeta;
     }
 
+    /**
+     * Motor de pestañas (Tabs): Alterna la visibilidad de los paneles estáticos superpuestos, 
+     * creando el efecto visual de navegar entre categorías sin cambiar de escena.
+     */
     private void mostrarGrid(String cat) {
         if (gridPizza != null) gridPizza.setVisible(cat.equals("Pizzas"));
         if (gridBebidas != null) gridBebidas.setVisible(cat.equals("Bebidas"));
@@ -168,6 +193,7 @@ public class MenuClienteController implements Initializable {
         if (gridEspeciales != null) gridEspeciales.setVisible(cat.equals("Especiales"));
     }
 
+    // --- Disparadores de Interfaz ---
     @FXML void clicVerPizzas(ActionEvent event) { mostrarGrid("Pizzas"); }
     @FXML void clicVerBebidas(ActionEvent event) { mostrarGrid("Bebidas"); }
     @FXML void clicVerPasteles(ActionEvent event) { mostrarGrid("Pasteles"); }
@@ -184,6 +210,9 @@ public class MenuClienteController implements Initializable {
         try { cambiarPantalla(event, "Login", "Iniciar Sesión - Pizzatron 3000"); } catch (IOException ex) { ex.printStackTrace(); }
     }
 
+    /**
+     * Enrutador hacia el ecosistema NoSQL (MongoDB) para gestionar retroalimentación.
+     */
     @FXML
     private void abrirPantallaOpiniones(ActionEvent event) {
         try { 

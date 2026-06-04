@@ -24,20 +24,22 @@ import com.mycompany.restaurante.dao.UsuarioDAO;
  * Facilita el alta, modificación y listado de los empleados del restaurante.
  * Administra la asignación de roles operativos, los cuales dictan los permisos (RBAC) 
  * que tendrá cada usuario al ingresar al sistema.
- * * @author Ricardo, Diego, Angel, Stephy
  */
 public class RegistroEmpleadoController implements Initializable {
 
+    // --- Controles de Formulario ---
     @FXML private TextField txtNombre;
     @FXML private TextField txtUsuario;
     @FXML private PasswordField txtPassword;
     @FXML private ComboBox<String> cbRol;
     
+    // --- Botones de Acción ---
     @FXML private Button btnRegistrar;
     @FXML private Button btnActualizar;
     @FXML private Button btnLimpiar;
     @FXML private Button btnVolver;
     
+    // --- Controles de Visualización de Datos ---
     @FXML private TableView<Usuario> tblEmpleados;
     @FXML private TableColumn<Usuario, String> colNombre;
     @FXML private TableColumn<Usuario, String> colUsuario;
@@ -56,9 +58,10 @@ public class RegistroEmpleadoController implements Initializable {
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        // Mejorado para incluir todos los roles de la base de datos de tu equipo
+        // Carga de roles fijos permitidos por la lógica de negocio
         cbRol.getItems().addAll("Gerente", "Mesero", "Chef", "Cajero", "Recepcionista");
         
+        // Enlace de datos: Conecta las columnas visuales con los atributos del POJO 'Usuario'
         colNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
         colUsuario.setCellValueFactory(new PropertyValueFactory<>("username"));
         colPassword.setCellValueFactory(new PropertyValueFactory<>("password"));
@@ -66,6 +69,7 @@ public class RegistroEmpleadoController implements Initializable {
         
         cargarEmpleados();
         
+        // Listener bidireccional: Al seleccionar una fila, se inyectan sus valores en los TextFields
         tblEmpleados.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             if (newSelection != null) {
                 empleadoSeleccionado = newSelection;
@@ -91,9 +95,9 @@ public class RegistroEmpleadoController implements Initializable {
      * Mapea el nombre del rol seleccionado en la interfaz gráfica con su 
      * respectiva clave foránea (ID) en la base de datos.
      * Nota Técnica: Garantiza la integridad referencial al insertar o actualizar 
-     * registros en la tabla de usuarios de MySQL.
-     * * @param nombreRol Cadena de texto representativa del rol (Ej. "Cajero").
-     * @return El identificador numérico de dicho rol en la base de datos.
+     * registros en la tabla de usuarios.
+     * @param nombreRol Cadena de texto representativa del rol (Ej. "Cajero").
+     * @return El identificador numérico de dicho rol en la base de datos, o 0 si no existe.
      */
     private int obtenerIdRol(String nombreRol) {
         if (nombreRol == null) return 0;
@@ -111,7 +115,7 @@ public class RegistroEmpleadoController implements Initializable {
      * Procesa el alta de un nuevo empleado en el sistema.
      * Valida que no existan campos vacíos, empaqueta los datos en un nuevo objeto Usuario 
      * y solicita su inserción a la base de datos. Refresca la tabla en caso de éxito.
-     * * @param event El evento disparado al presionar el botón "Registrar".
+     * @param event El evento disparado al presionar el botón "Registrar".
      */
     @FXML
     private void clicRegistrar(ActionEvent event) {
@@ -120,6 +124,7 @@ public class RegistroEmpleadoController implements Initializable {
         String password = txtPassword.getText();
         String rol = cbRol.getValue();
 
+        // Blindaje contra inserciones de datos incompletos
         if (nombre.isEmpty() || usuario.isEmpty() || password.isEmpty() || rol == null) {
             mostrarAlerta("Error", "Todos los campos son obligatorios.");
             return;
@@ -137,11 +142,11 @@ public class RegistroEmpleadoController implements Initializable {
     }
 
     /**
-     * Sobreescribe los datos de un empleado existente (Modificación).
+     * Sobreescribe los datos de un empleado existente (Update).
      * Requiere que el usuario haya seleccionado previamente una fila en la tabla. 
      * Extrae los nuevos valores del formulario, actualiza el objeto seleccionado en memoria 
-     * y consolida el cambio (UPDATE) en la base de datos.
-     * * @param event El evento disparado al presionar el botón "Actualizar".
+     * y consolida el cambio en la base de datos.
+     * @param event El evento disparado al presionar el botón "Actualizar".
      */
     @FXML
     private void clicActualizar(ActionEvent event) {
@@ -160,6 +165,7 @@ public class RegistroEmpleadoController implements Initializable {
             return;
         }
 
+        // Se inyectan los nuevos datos al objeto que ya posee el ID original
         empleadoSeleccionado.setNombre(nombre);
         empleadoSeleccionado.setUsername(usuario);
         empleadoSeleccionado.setPassword(password);
@@ -177,7 +183,7 @@ public class RegistroEmpleadoController implements Initializable {
 
     /**
      * Interfaz puente para limpiar los controles del formulario y purgar las selecciones en memoria.
-     * * @param event Evento de clic en el botón "Limpiar".
+     * @param event Evento de clic en el botón "Limpiar".
      */
     @FXML
     private void clicLimpiar(ActionEvent event) {
@@ -223,7 +229,7 @@ public class RegistroEmpleadoController implements Initializable {
 
     /**
      * Despliega un cuadro de diálogo estandarizado para brindar avisos operativos.
-     * * @param titulo  Cabecera de la alerta.
+     * @param titulo  Cabecera de la alerta.
      * @param mensaje Cuerpo descriptivo para notificar al usuario.
      */
     private void mostrarAlerta(String titulo, String mensaje) {

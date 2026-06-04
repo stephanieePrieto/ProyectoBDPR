@@ -26,8 +26,7 @@ import javafx.stage.Stage;
 
 /**
  * Controlador de la vista del cliente para el seguimiento de sus reservaciones.
- * Migrado a arquitectura Oracle Cloud.
- * @author Ricardo, Diego, Angel, Stephy
+ * Migrado a arquitectura Oracle Cloud. Permite la consulta, modificación y cancelación.
  */
 public class ConsultarReservacionController {
 
@@ -40,6 +39,9 @@ public class ConsultarReservacionController {
     private Reservacion reservacionActual = null;
     private final ReservacionDAO dao = new ReservacionDAO();
 
+    /**
+     * Retorna al cliente a la pantalla principal de reservaciones.
+     */
     @FXML
     void handleRegresar(ActionEvent event) {
         try {
@@ -52,15 +54,22 @@ public class ConsultarReservacionController {
         }
     }
 
+    /**
+     * Ejecuta una consulta segura a Oracle Cloud para buscar la reservación activa más reciente
+     * asociada al ID del cliente ingresado.
+     * @param event Evento disparado por el botón de búsqueda.
+     */
     @FXML
     void clicBuscar(ActionEvent event) {
         String idBuscado = txtFolio.getText().trim().toUpperCase();
         
+        // Validación de campo vacío
         if (idBuscado.isEmpty()) {
             mostrarAlerta("ID Vacío", "Ingresa un ID válido (Ej: CP001) para buscar.", Alert.AlertType.WARNING);
             return;
         }
 
+        // Capa de seguridad: Verifica que el cliente logueado solo pueda buscar su propia información
         if (App.idClienteLogueado != null && !idBuscado.equals(App.idClienteLogueado)) {
             mostrarAlerta("Acceso Denegado", 
                 "¡Ojo ahí! Solo tienes permiso para consultar tus propias reservaciones.", 
@@ -69,7 +78,8 @@ public class ConsultarReservacionController {
             return;
         }
 
-        // Consulta ajustada para Oracle: Uso de FETCH FIRST 1 ROW ONLY
+        // Uso de FETCH FIRST 1 ROW ONLY (Equivalente al LIMIT 1 de MySQL)
+        // Se hace un LEFT JOIN para traer el nombre del cliente directamente en la consulta.
         String sql = "SELECT r.idReservacion, r.folioUnico, r.id_cliente, c.nombre AS nombre_cliente, " +
                      "r.idMesa, r.fecha, r.hora, r.num_personas, r.estado " +
                      "FROM reservaciones r " +
@@ -81,6 +91,7 @@ public class ConsultarReservacionController {
             ps.setString(1, idBuscado);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
+                    // Mapeo del ResultSet al objeto Reservacion
                     reservacionActual = new Reservacion(
                         rs.getInt("idReservacion"),
                         rs.getString("folioUnico"),
@@ -93,6 +104,7 @@ public class ConsultarReservacionController {
                         rs.getString("estado")
                     );
                     
+                    // Inyección de datos en la interfaz gráfica
                     lblCliente.setText(reservacionActual.getNombreCliente());
                     lblMesa.setText("Mesa No. " + reservacionActual.getIdMesa());
                     lblFecha.setText(reservacionActual.getFecha());
@@ -100,6 +112,7 @@ public class ConsultarReservacionController {
                     lblPersonas.setText(String.valueOf(reservacionActual.getNumPersonas()));
                     lblEstado.setText(reservacionActual.getEstado().toUpperCase());
                     
+                    // Lógica de negocio: Solo permite modificar/cancelar si la reserva sigue activa
                     boolean activa = !lblEstado.getText().equalsIgnoreCase("CANCELADA");
                     btnModificar.setDisable(!activa);
                     btnCancelar.setDisable(!activa);
@@ -114,6 +127,10 @@ public class ConsultarReservacionController {
         }
     }
 
+    /**
+     * Construye dinámicamente un cuadro de diálogo (Dialog) con controles JavaFX integrados
+     * (DatePicker, ComboBox, Spinner) para permitir al cliente reprogramar su reservación.
+     */
     @FXML
     void clicModificar(ActionEvent event) {
         if (reservacionActual == null) return;
@@ -130,6 +147,7 @@ public class ConsultarReservacionController {
         grid.setVgap(10);
         grid.setPadding(new Insets(20, 150, 10, 10));
 
+        // DatePicker con restricción para no permitir seleccionar fechas pasadas
         DatePicker dpNuevaFecha = new DatePicker(LocalDate.parse(reservacionActual.getFecha()));
         dpNuevaFecha.setEditable(false);
         dpNuevaFecha.setDayCellFactory(picker -> new DateCell() {
@@ -140,7 +158,8 @@ public class ConsultarReservacionController {
             }
         });
 
-        ComboBox<String> cbNuevaHora = new ComboBox<>(FXCollections.observableArrayList("13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00"));
+        ComboBox<String> cbNuevaHora = new ComboBox<>(FXCollections.observableArrayList(
+                "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00"));
         cbNuevaHora.setValue(reservacionActual.getHora().substring(0, 5)); 
         
         Spinner<Integer> spNuevasPersonas = new Spinner<>(1, 10, reservacionActual.getNumPersonas());
@@ -154,6 +173,7 @@ public class ConsultarReservacionController {
 
         dialog.getDialogPane().setContent(grid);
 
+        // Espera a que el cliente interactúe con el diálogo
         Optional<ButtonType> resultado = dialog.showAndWait();
         
         if (resultado.isPresent() && resultado.get() == btnGuardar) {
@@ -169,7 +189,7 @@ public class ConsultarReservacionController {
             try {
                 if (dao.actualizarReservacion(modificada)) {
                     mostrarAlerta("Éxito", "La reservación se actualizó correctamente.", Alert.AlertType.INFORMATION);
-                    clicBuscar(null); 
+                    clicBuscar(null); // Refresca los datos en pantalla
                 }
             } catch (SQLException e) {
                 mostrarAlerta("Error", "No se pudo actualizar en la base de datos.", Alert.AlertType.ERROR);
@@ -177,6 +197,10 @@ public class ConsultarReservacionController {
         }
     }
 
+    /**
+     * Procesa la cancelación de la reservación activa.
+     * Ejecuta una baja lógica o cambio de estado y libera la mesa ocupada en la base de datos.
+     */
     @FXML
     void clicCancelar(ActionEvent event) {
         if (reservacionActual == null) return;
@@ -188,14 +212,17 @@ public class ConsultarReservacionController {
         
         if (conf.showAndWait().get() == ButtonType.OK) {
             try {
+                // 1. Cancela la reserva en el DAO
                 if (dao.cancelarReservacion(reservacionActual.getIdReservacion())) {
+                    
+                    // 2. Libera la mesa físicamente en Oracle Cloud
                     try (Connection con = OracleConnect.getConexion();
                          PreparedStatement ps = con.prepareStatement("UPDATE mesa SET estado = 'Libre' WHERE idMesa = ?")) {
                         ps.setInt(1, reservacionActual.getIdMesa());
                         ps.executeUpdate();
                     }
                     mostrarAlerta("Cancelada", "Reservación cancelada y mesa liberada con éxito.", Alert.AlertType.INFORMATION);
-                    clicBuscar(null); 
+                    clicBuscar(null); // Refresca los datos en pantalla
                 }
             } catch (SQLException e) {
                 mostrarAlerta("Error", "Hubo un fallo al intentar cancelar.", Alert.AlertType.ERROR);
@@ -204,6 +231,9 @@ public class ConsultarReservacionController {
         }
     }
 
+    /**
+     * Restablece el panel de información a su estado oculto/vacío.
+     */
     private void limpiarCampos() {
         reservacionActual = null;
         lblCliente.setText("---");
@@ -216,6 +246,9 @@ public class ConsultarReservacionController {
         btnCancelar.setDisable(true);
     }
 
+    /**
+     * Utilidad para instanciar cuadros de diálogo.
+     */
     private void mostrarAlerta(String titulo, String mensaje, Alert.AlertType tipo) {
         Alert alerta = new Alert(tipo);
         alerta.setTitle(titulo);

@@ -17,9 +17,9 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
 /**
- * Controlador encargado del módulo de registro para nuevos clientes.
- * Migrado a arquitectura Oracle Cloud.
- * @author Ricardo, Diego, Angel, Stephy
+ * Controlador encargado del módulo de registro e inicialización (Onboarding)
+ * para clientes de primera vez.
+ * Migrado a sintaxis y arquitectura exclusiva de Oracle Cloud.
  */
 public class RegistroClienteController {
 
@@ -27,9 +27,9 @@ public class RegistroClienteController {
     @FXML private PasswordField txtTelefono;
 
     /**
-     * Procesa la solicitud de inscripción de un nuevo cliente al sistema.
-     * Valida la entrada de datos, genera secuencialmente el siguiente ID disponible 
-     * (Ej. de CP001 a CP002) y persiste la información en la base de datos Oracle.
+     * Procesa la solicitud de inscripción de un nuevo cliente al ecosistema del restaurante.
+     * Lee la tabla de clientes existente en la Nube, genera secuencialmente el 
+     * siguiente ID alfanumérico disponible (Ej. de CP001 salta a CP002) y persiste el perfil.
      * @param event Evento disparado por el botón "Registrarse".
      */
     @FXML
@@ -43,8 +43,9 @@ public class RegistroClienteController {
         }
 
         try (Connection con = OracleConnect.getConexion()) {
-            // 1. Lógica para auto-generar el ID alfanumérico (CP001, CP002, etc.)
-            // En Oracle usamos FETCH FIRST 1 ROW ONLY en lugar de LIMIT 1
+            
+            // 1. Lógica para auto-generar el ID alfanumérico secuencial
+            // MAGIA ORACLE: Se utiliza la cláusula `FETCH FIRST 1 ROW ONLY` que reemplaza al clásico `LIMIT 1` de MySQL
             String nuevoId = "CP001";
             String sqlMax = "SELECT id_cliente FROM clientes WHERE id_cliente LIKE 'CP%' ORDER BY id_cliente DESC FETCH FIRST 1 ROW ONLY";
             
@@ -52,12 +53,13 @@ public class RegistroClienteController {
                  ResultSet rsMax = psMax.executeQuery()) {
                 if (rsMax.next()) {
                     String maxId = rsMax.getString("id_cliente");
+                    // Extrae el número (ej. "001"), le suma uno y lo recodifica a texto rellenando ceros a la izquierda
                     int numero = Integer.parseInt(maxId.substring(2)) + 1;
                     nuevoId = String.format("CP%03d", numero);
                 }
             }
 
-            // 2. Guardar el nuevo registro en la base de datos
+            // 2. Almacenamiento seguro del nuevo perfil
             String sqlInsert = "INSERT INTO clientes (id_cliente, nombre, telefono) VALUES (?, ?, ?)";
             try (PreparedStatement psInsert = con.prepareStatement(sqlInsert)) {
                 psInsert.setString(1, nuevoId);
@@ -72,7 +74,7 @@ public class RegistroClienteController {
                     "Anota tu ID, lo necesitarás para iniciar sesión.", 
                     Alert.AlertType.INFORMATION);
                 
-                irAlLogin();
+                irAlLogin(); // Despacha al cliente al login tras una captura exitosa
             }
             
         } catch (SQLException e) {
@@ -82,7 +84,8 @@ public class RegistroClienteController {
     }
 
     /**
-     * Interrumpe el proceso de registro y retorna a la interfaz principal de autenticación.
+     * Interrumpe el proceso de registro descartando los datos y 
+     * retorna la navegación a la interfaz principal de autenticación.
      * @param event Evento disparado por el botón "Volver".
      */
     @FXML
@@ -91,7 +94,7 @@ public class RegistroClienteController {
     }
 
     /**
-     * Centraliza la lógica de navegación hacia la vista de Login.
+     * Concentrador lógico para evitar redundancia de código al invocar la pantalla de Login.
      */
     private void irAlLogin() {
         try {
@@ -108,7 +111,7 @@ public class RegistroClienteController {
     }
 
     /**
-     * Construye y despliega un cuadro de diálogo dinámico para notificar al usuario.
+     * Generador estandarizado de notificaciones modales visuales para la UI.
      */
     private void mostrarAlerta(String titulo, String mensaje, Alert.AlertType tipo) {
         Alert alerta = new Alert(tipo);

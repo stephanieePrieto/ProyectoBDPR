@@ -26,26 +26,39 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+/**
+ * Controlador interactivo para la asignación visual de reservas por parte del cliente.
+ * Despliega un mapa del restaurante, evalúa reglas estrictas de aforo y cruza 
+ * validaciones para evitar duplicidad de reservas o choques de horarios.
+ */
 public class VentanaPizzatronController implements Initializable {
 
+    // --- Componentes del Mapa interactivo ---
     @FXML private GridPane gridMesas;
+    
+    // --- Formularios de Configuración de la Reserva ---
     @FXML private DatePicker dpFecha;
     @FXML private ComboBox<String> cbHora;
     @FXML private Spinner<Integer> spPersonas;
-    
     @FXML private TextField txtNombreCliente;
 
+    // Constante para recurso gráfico
     private final String RUTA_PINGUINO = "/img/pinguinomesa.png";
 
+    /**
+     * Establece los valores iniciales y restricciones del calendario para
+     * impedir reservaciones en el pasado, e invoca el renderizado del mapa físico.
+     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        // Llenar datos de reserva
         cbHora.setItems(FXCollections.observableArrayList("13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00"));
         cbHora.setValue("15:00");
         spPersonas.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 10, 2));
         
         dpFecha.setEditable(false);
         dpFecha.setValue(LocalDate.now());
+        
+        // Personalización de las celdas del DatePicker
         dpFecha.setDayCellFactory(picker -> new DateCell() {
             @Override
             public void updateItem(LocalDate date, boolean empty) {
@@ -59,6 +72,12 @@ public class VentanaPizzatronController implements Initializable {
         
         actualizarMapaMesas();
     }
+    
+    /**
+     * Regla de negocio inyectada que dicta los aforos máximos.
+     * @param numMesa Identificador físico de la mesa en el restaurante.
+     * @return Límite máximo de comensales.
+     */
     private int obtenerCapacidadMesa(int numMesa) {
         switch (numMesa) {
             case 3: case 7: case 9: 
@@ -74,6 +93,10 @@ public class VentanaPizzatronController implements Initializable {
         }
     }
 
+    /**
+     * Consulta a la base de datos el estado actual de todas las mesas y las dibuja
+     * dinámicamente como botones en la interfaz, aplicando estilos CSS y gráficos.
+     */
     public void actualizarMapaMesas() {
         gridMesas.getChildren().clear();
         String sql = "SELECT idMesa, numero, estado FROM mesa ORDER BY numero ASC";
@@ -88,41 +111,35 @@ public class VentanaPizzatronController implements Initializable {
                 int num = rs.getInt("numero");
                 String estado = rs.getString("estado");
                 
-                // Obtenemos la capacidad para mostrarla en el botón
                 int capacidad = obtenerCapacidadMesa(num);
 
                 Button mesaBtn = new Button("Mesa " + num);
-                mesaBtn.setPrefSize(140, 120); // Un poco más grandes para que quepa el pingu
+                mesaBtn.setPrefSize(140, 120);
 
-               
                 mesaBtn.setContentDisplay(ContentDisplay.GRAPHIC_ONLY); 
                 mesaBtn.setAlignment(Pos.CENTER);
 
                 if (estado.equalsIgnoreCase("Libre")) {
                     mesaBtn.setStyle("-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 15; -fx-cursor: hand;");
-                    // Mostramos el límite visualmente en la mesa libre
                     mesaBtn.setText("Mesa " + num + "\n(LIBRE)\nMax: " + capacidad + " pax");
                     mesaBtn.setContentDisplay(ContentDisplay.TEXT_ONLY);
                     mesaBtn.setOnAction(e -> ejecutarReserva(id, num));
                     mesaBtn.setGraphic(null); 
                 } else if (estado.equalsIgnoreCase("Ocupada")) {
                     try {
-                        // CARGA SEGURA: Buscamos la imagen en /src/main/resources/img/
+                        // Inyección del gráfico representativo
                         URL imageUrl = getClass().getResource(RUTA_PINGUINO);
                         if (imageUrl != null) {
                             Image img = new Image(imageUrl.toString());
                             ImageView view = new ImageView(img);
                             
-                            // Ajustes de tamaño y proporción para que el pingu no se vea estirado
-                            view.setFitHeight(75); // Lo hice un pelín más chico para que quepa el texto extra
+                            view.setFitHeight(75); 
                             view.setFitWidth(75);
                             view.setPreserveRatio(true);
-                            view.setSmooth(true); // Suaviza los bordes
+                            view.setSmooth(true); 
 
-                            // VBox para centrar imagen y texto dentro del botón
                             VBox content = new VBox(2); 
                             content.setAlignment(Pos.CENTER);
-                            // Mostramos el límite visualmente debajo del pingüino
                             Label lblMesa = new Label("Mesa " + num + "\nMax: " + capacidad + " pax");
                             lblMesa.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-alignment: center; -fx-font-size: 11px;");
                             
@@ -140,6 +157,7 @@ public class VentanaPizzatronController implements Initializable {
                         mesaBtn.setText("Mesa " + num + "\n(RESERVADA)\nMax: " + capacidad + " pax");
                         mesaBtn.setContentDisplay(ContentDisplay.TEXT_ONLY);
                     }
+                    // Bloqueo visual de la mesa
                     mesaBtn.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 15;");
                     mesaBtn.setDisable(true); 
                 } else {
@@ -153,12 +171,19 @@ public class VentanaPizzatronController implements Initializable {
         } catch (Exception e) { e.printStackTrace(); }
     }
 
+    /**
+     * Valida y procesa la transacción transaccional de una reserva.
+     * Evalúa choques de agenda, aforo y existencia de cliente previo.
+     * @param idMesa Clave primaria en la BD.
+     * @param numMesa Identificador visual de la mesa.
+     */
     private void ejecutarReserva(int idMesa, int numMesa) {
         if (dpFecha.getValue() == null || cbHora.getValue() == null) {
             mostrarAlerta("Datos incompletos", "El pingüino necesita saber día y hora.");
             return;
         }
         
+        // 1. Validación Estricta de Aforo
         int capacidadMax = obtenerCapacidadMesa(numMesa);
         int personasSolicitadas = spPersonas.getValue();
         
@@ -166,7 +191,7 @@ public class VentanaPizzatronController implements Initializable {
             mostrarAlerta("Límite Excedido", 
                 "¡Ojo ahí! La Mesa " + numMesa + " solo tiene capacidad para " + capacidadMax + " pingüinos.\n\n" +
                 "No puedes meter a " + personasSolicitadas + " personas en esta mesa. Por favor, selecciona una mesa más grande o reduce el número de personas.");
-            return; // Cortamos la ejecución, no lo deja avanzar a la base de datos
+            return; // Interrumpe la operación
         }
 
         String nombre = txtNombreCliente != null && txtNombreCliente.getText() != null ? txtNombreCliente.getText().trim() : "";
@@ -175,6 +200,7 @@ public class VentanaPizzatronController implements Initializable {
             return;
         }
 
+        // 2. Validación Lógica de Fechas
         LocalDate fechaSel = dpFecha.getValue();
         if (fechaSel.isBefore(LocalDate.now())) {
             mostrarAlerta("Fecha Inválida", "No puedes viajar en el tiempo. Elige una fecha de hoy en adelante.");
@@ -191,6 +217,7 @@ public class VentanaPizzatronController implements Initializable {
 
         try (Connection con = ConexionBD.conectar()) {
             
+            // 3. Bloqueo de Colisión (Doble Booking)
             PreparedStatement psCheck = con.prepareStatement("SELECT COUNT(*) FROM reservaciones WHERE idMesa = ? AND fecha = ? AND hora = ? AND estado != 'Cancelada'");
             psCheck.setInt(1, idMesa);
             psCheck.setString(2, fechaSel.toString());
@@ -201,6 +228,7 @@ public class VentanaPizzatronController implements Initializable {
                  return;
             }
 
+            // 4. Bloqueo Anti-Spam (Un cliente no puede reservar dos mesas a la vez el mismo día)
             PreparedStatement psCheckPerson = con.prepareStatement("SELECT COUNT(*) FROM reservaciones r INNER JOIN clientes c ON r.id_cliente = c.id_cliente WHERE c.nombre = ? AND r.fecha = ? AND r.estado != 'Cancelada'");
             psCheckPerson.setString(1, nombre);
             psCheckPerson.setString(2, fechaSel.toString());
@@ -210,22 +238,20 @@ public class VentanaPizzatronController implements Initializable {
                  return;
             }
 
-            // Si pasa todas las pruebas, obtenemos/creamos su ID usando tu DAO
+            // 5. Inserción Definitiva
             ReservacionDAO dao = new ReservacionDAO();
             String idClienteReal = dao.obtenerOGenerarIdCliente(nombre);
 
-            // Actualizar la mesa seleccionada
             PreparedStatement ps = con.prepareStatement("UPDATE mesa SET estado = 'Ocupada' WHERE idMesa = ?");
             ps.setInt(1, idMesa);
             ps.executeUpdate();
 
-            // Insertar registro en reservaciones
             PreparedStatement psRes = con.prepareStatement("INSERT INTO reservaciones (folioUnico, id_cliente, idMesa, fecha, hora, num_personas, estado) VALUES (?,?,?,?,?,?,'Confirmada')");
             psRes.setString(1, UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-            psRes.setString(2, idClienteReal); // Usamos el ID real en vez de CP001
+            psRes.setString(2, idClienteReal); 
             psRes.setInt(3, idMesa);
             psRes.setString(4, dpFecha.getValue().toString());
-            psRes.setString(5, cbHora.getValue() + ":00"); // Añadimos los segundos para MySQL
+            psRes.setString(5, cbHora.getValue() + ":00"); // Añadimos los segundos requeridos por la DB
             psRes.setInt(6, spPersonas.getValue());
             psRes.executeUpdate();
 
@@ -237,6 +263,9 @@ public class VentanaPizzatronController implements Initializable {
         }
     }
 
+    /**
+     * Retorna a la pantalla del menú general.
+     */
     @FXML
     private void handleRegresar() {
         try {
@@ -249,6 +278,9 @@ public class VentanaPizzatronController implements Initializable {
         }
     }
 
+    /**
+     * Función administrativa global para desocupar la sala (Hard Reset).
+     */
     @FXML
     private void cancelarReserva() {
         try (Connection con = ConexionBD.conectar()) {
@@ -266,14 +298,15 @@ public class VentanaPizzatronController implements Initializable {
         a.showAndWait();
     }
 
+    /**
+     * Redirige a la pantalla especializada para la consulta y cancelación.
+     */
     @FXML
     private void irPantallaConsultar(ActionEvent event) {
         try {
-            // Cargamos el FXML de la pantalla de consulta que arreglamos ayer
-           FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/ConsultarReservacionesCliente.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/ConsultarReservacionesCliente.fxml"));
             Parent root = loader.load();
             
-            // Conseguimos la ventana actual y le cambiamos la escena
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             stage.setScene(new Scene(root));
             stage.setTitle("Consultar Reservación - Pizzatron CP");

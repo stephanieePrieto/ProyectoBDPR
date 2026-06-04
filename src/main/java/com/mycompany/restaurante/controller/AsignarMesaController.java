@@ -36,7 +36,6 @@ import javafx.stage.Stage;
 
 /**
  * Controlador para la gestión interna de asignación de mesas por parte del staff.
- * * @author Stephanie Hernandez
  */
 public class AsignarMesaController implements Initializable {
 
@@ -53,8 +52,13 @@ public class AsignarMesaController implements Initializable {
     private int numeroMesaSeleccionada = -1;
     private final String RUTA_PINGUINO = "/img/pinguinomesa.png";
 
+    /**
+     * Inicializa componentes, configura los valores por defecto del spinner
+     * y genera la visualización del mapa del restaurante.
+     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        // Rango de personas admitidas en el spinner: Mín 1, Máx 10, Inicio en 2.
         spPersonas.setValueFactory(
             new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 10, 2)
         );
@@ -63,6 +67,10 @@ public class AsignarMesaController implements Initializable {
         actualizarMapaMesas();
     }
 
+    /**
+     * Traslada la información de un cliente desde la pantalla de Lista de Espera 
+     * hacia el formulario de asignación de mesa.
+     */
     public void recibirClienteEspera(ListaDeEspera cliente) {
         this.clienteEspera = cliente;
         txtNombreCliente.setText(cliente.getNombreCliente());
@@ -71,6 +79,11 @@ public class AsignarMesaController implements Initializable {
         lblMesaSeleccionada.setText("Cliente de lista: " + cliente.getNombreCliente());
     }
 
+    /**
+     * Establece el aforo máximo permitido dependiendo de la mesa solicitada.
+     * @param numMesa Identificador físico de la mesa.
+     * @return Límite de pax permitidos.
+     */
     private int obtenerCapacidadMesa(int numMesa) {
         switch (numMesa) {
             case 3: case 7: case 9: return 2;
@@ -81,6 +94,10 @@ public class AsignarMesaController implements Initializable {
         }
     }
 
+    /**
+     * Construye un botón dinámico por cada mesa hallada en la base de datos 
+     * y lo posiciona en la cuadrícula visual (GridPane).
+     */
     public void actualizarMapaMesas() {
         gridMesas.getChildren().clear();
         String sql = "SELECT idMesa, numero, estado FROM mesa ORDER BY numero ASC";
@@ -100,12 +117,14 @@ public class AsignarMesaController implements Initializable {
                 mesaBtn.setPrefSize(140, 120);
 
                 if (estado.equalsIgnoreCase("Libre")) {
+                    // Diseño simple en color verde
                     mesaBtn.setStyle("-fx-background-color: #2ecc71; -fx-text-fill: white; "
                             + "-fx-font-weight: bold; -fx-background-radius: 15; -fx-cursor: hand;");
                     mesaBtn.setText("Mesa " + num + "\n(LIBRE)\nMax: " + capacidad + " pax");
                     mesaBtn.setContentDisplay(ContentDisplay.TEXT_ONLY);
                     mesaBtn.setOnAction(e -> seleccionarMesa(id, num, "Libre"));
                 } else {
+                    // Diseño complejo en color rojo (agrega gráfica/imagen)
                     mesaBtn.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; "
                             + "-fx-font-weight: bold; -fx-background-radius: 15; -fx-cursor: hand;");
 
@@ -147,6 +166,9 @@ public class AsignarMesaController implements Initializable {
         }
     }
 
+    /**
+     * Sincroniza la información de la mesa a la que se le hizo clic con el formulario.
+     */
     private void seleccionarMesa(int idMesa, int numMesa, String estadoActual) {
         this.idMesaSeleccionada = idMesa;
         this.numeroMesaSeleccionada = numMesa;
@@ -154,6 +176,9 @@ public class AsignarMesaController implements Initializable {
         cbEstadoMesa.setValue(estadoActual.equalsIgnoreCase("Ocupada") ? "Ocupada" : "Libre");
     }
 
+    /**
+     * Valida el aforo permitido y consolida la actualización del estado de la mesa en BD.
+     */
     @FXML
     private void asignarMesaActual(ActionEvent event) {
         if (idMesaSeleccionada == -1) {
@@ -162,8 +187,10 @@ public class AsignarMesaController implements Initializable {
         }
 
         String nuevoEstado = cbEstadoMesa.getValue();
+        // Garantizamos que si viene de lista de espera asuma estado de Ocupado
         if (clienteEspera != null) { nuevoEstado = "Ocupada"; }
 
+        // Validación de reglas de negocio para la capacidad máxima del establecimiento
         if (nuevoEstado.equalsIgnoreCase("Ocupada")) {
             int numPersonasSolicitadas = spPersonas.getValue();
             int capacidadMax = obtenerCapacidadMesa(numeroMesaSeleccionada);
@@ -183,6 +210,7 @@ public class AsignarMesaController implements Initializable {
             ps.setInt(2, idMesaSeleccionada);
             ps.executeUpdate();
 
+            // Desencolamiento del cliente si fue despachado desde la lista de espera
             if (clienteEspera != null) {
                 listaEsperaDAO.eliminarDeLista(clienteEspera.getIdEspera());
                 clienteEspera = null;
@@ -196,6 +224,9 @@ public class AsignarMesaController implements Initializable {
         }
     }
 
+    /**
+     * Función administrativa para vaciar el plano completo (útil al cierre del día).
+     */
     @FXML
     private void liberarTodasLasMesas(ActionEvent event) {
         try (Connection con = ConexionBD.conectar();
@@ -209,7 +240,7 @@ public class AsignarMesaController implements Initializable {
         }
     }
 
-/**
+    /**
      * Maneja la navegación de retorno al panel principal del sistema.
      * Preserva la sesión del empleado activo de forma segura.
      * @param event El evento del clic en el botón de regreso.
@@ -240,6 +271,9 @@ public class AsignarMesaController implements Initializable {
         }
     }
 
+    /**
+     * Vuelve el formulario a sus valores predeterminados (estado base).
+     */
     private void limpiarFormulario() {
         idMesaSeleccionada = -1;
         numeroMesaSeleccionada = -1;
@@ -249,6 +283,9 @@ public class AsignarMesaController implements Initializable {
         cbEstadoMesa.setValue("Ocupada");
     }
 
+    /**
+     * Wrapper de UI para invocar alertas genéricas.
+     */
     private void mostrarAlerta(String t, String m) {
         Alert a = new Alert(Alert.AlertType.INFORMATION);
         a.setTitle(t); a.setHeaderText(null); a.setContentText(m); a.showAndWait();

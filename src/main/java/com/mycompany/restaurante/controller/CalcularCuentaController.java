@@ -28,7 +28,6 @@ import java.awt.Desktop;
 
 /**
  * Controlador para la emisión y cálculo de precuentas fiscales en PDF.
- * * @author Stephanie Hernandez
  */
 public class CalcularCuentaController implements Initializable {
 
@@ -41,15 +40,21 @@ public class CalcularCuentaController implements Initializable {
 
     private DetalleFacturaDAO cuentaDAO = new DetalleFacturaDAO();
 
+    /**
+     * Configura el comportamiento estático de los campos (sólo lectura) y 
+     * asigna observadores (listeners) dinámicos a los ComboBoxes.
+     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         UsuarioDAO usuarioDAO = new UsuarioDAO();
         
+        // Cierre de campos de salida para prevenir alteraciones al cobro
         if (txtSubtotal != null) txtSubtotal.setEditable(false);
         if (txtIVA != null) txtIVA.setEditable(false);
         if (txtTotal != null) txtTotal.setEditable(false);
         if (txtAreaTicket != null) txtAreaTicket.setEditable(false);
         
+        // Configuración de lista de empleados
         if (cmbMesero != null) {
             cmbMesero.setItems(usuarioDAO.obtenerNombresMeseros());
             if (!cmbMesero.getItems().isEmpty()) {
@@ -61,6 +66,7 @@ public class CalcularCuentaController implements Initializable {
             });
         }
 
+        // Poblado de número de mesas fijas e integración de cálculo automático
         if (cbMesaTicket != null) {
             cbMesaTicket.getItems().clear();
             for (int i = 1; i <= 12; i++) {
@@ -73,12 +79,20 @@ public class CalcularCuentaController implements Initializable {
         }
     }
 
+    /**
+     * Valida que existan ambos parámetros necesarios antes de procesar el cálculo.
+     */
     private void dispararCalculoAutomatico() {
         if (cbMesaTicket.getValue() != null && cmbMesero.getValue() != null) {
             procesarPrecuentaMesa(cbMesaTicket.getValue());
         }
     }
 
+    /**
+     * Obtiene el subtotal desde el DAO, deduce los impuestos de forma fiscal 
+     * y genera la cadena visual del ticket.
+     * @param idMesa Mesa a procesar.
+     */
     private void procesarPrecuentaMesa(int idMesa) {
         double subtotal = cuentaDAO.obtenerSubtotalMesa(idMesa);
 
@@ -92,6 +106,7 @@ public class CalcularCuentaController implements Initializable {
 
             generarEstructuraTicket(idMesa, subtotal, iva, total);
         } else {
+            // Protección en caso de consultar mesas inactivas
             limpiarCampos();
             if (txtAreaTicket != null) {
                 txtAreaTicket.setText("=== PIZZATRON 3000 ===\n\n"
@@ -101,6 +116,9 @@ public class CalcularCuentaController implements Initializable {
         }
     }
 
+    /**
+     * Compone la estructura alfanumérica simulando la salida física de un POS térmico.
+     */
     private void generarEstructuraTicket(int idMesa, double sub, 
             double iva, double tot) {
         List<Platillo> items = cuentaDAO.obtenerDetallePedidoPorMesa(idMesa);
@@ -121,6 +139,7 @@ public class CalcularCuentaController implements Initializable {
         ticket.append("-----------------------------------------\n");
 
         for (Platillo p : items) {
+            // Manejo estricto de padding para alineación de columnas
             String nom = p.getNombre().length() > 20 
                     ? p.getNombre().substring(0, 19) : p.getNombre();
             ticket.append(String.format("%-22s %-6d $%-10.2f\n", 
@@ -133,12 +152,16 @@ public class CalcularCuentaController implements Initializable {
         ticket.append("=========================================\n");
         ticket.append(String.format("%-28s $%-10.2f\n", "TOTAL A PAGAR:", tot));
         ticket.append("=========================================\n");
-        ticket.append("     ¡Gracias por su preferencia!       \n");
+        ticket.append("      ¡Gracias por su preferencia!       \n");
         ticket.append("=========================================");
 
         if (txtAreaTicket != null) txtAreaTicket.setText(ticket.toString());
     }
 
+    /**
+     * Interpreta la cadena base del ticket y lo emite como un documento PDF 
+     * exportable valiéndose del motor IText7.
+     */
     @FXML
     private void btnGenerarTicket(ActionEvent event) {
         if (cbMesaTicket.getValue() == null || txtTotal.getText().isEmpty()) {
@@ -158,6 +181,7 @@ public class CalcularCuentaController implements Initializable {
                     .setFontSize(10).setMultipliedLeading(1.2f));
             documento.close();
 
+            // Instrucción de entorno (OS) para abrir el archivo autogenerado
             File archivoPdf = new File(nombreArchivo);
             if (archivoPdf.exists() && Desktop.isDesktopSupported()) {
                 Desktop.getDesktop().open(archivoPdf);
@@ -168,6 +192,9 @@ public class CalcularCuentaController implements Initializable {
         }
     }
 
+    /**
+     * Vuelve al estado inicial los TextFields de cálculo si la mesa queda desocupada.
+     */
     private void limpiarCampos() {
         if (txtSubtotal != null) txtSubtotal.clear();
         if (txtIVA != null) txtIVA.clear();

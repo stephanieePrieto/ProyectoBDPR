@@ -27,13 +27,14 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
 
 /**
- * Controlador de UI para la administración integral de reservaciones.
+ * Controlador de UI para la administración integral de reservaciones por parte del Staff.
  * Integra validaciones en tiempo de ejecución para aplicar cancelaciones
- * automáticas por impuntualidad tras un umbral de 15 minutos.
- * * @author Stephanie Hernandez
+ * automáticas por impuntualidad tras un umbral de 15 minutos, y provee un 
+ * buscador en tiempo real sobre los registros activos.
  */
 public class ReservacionController implements Initializable {
 
+    // --- Controles de Formulario ---
     @FXML private TextField txtCliente;
     @FXML private TextField txtBuscador;
     @FXML private DatePicker dpFecha;
@@ -41,6 +42,7 @@ public class ReservacionController implements Initializable {
     @FXML private ComboBox<Integer> cbPinguinos;
     @FXML private ComboBox<Integer> cbMesa;
 
+    // --- Tabla de Reservaciones ---
     @FXML private TableView<Reservacion> tablaReservaciones;
     @FXML private TableColumn<Reservacion, String> colCliente;
     @FXML private TableColumn<Reservacion, String> colFecha;
@@ -50,14 +52,22 @@ public class ReservacionController implements Initializable {
     @FXML private TableColumn<Reservacion, Integer> colPinguinos;
     @FXML private TableColumn<Reservacion, Integer> colMesa;
 
+    // Estructuras reactivas para la gestión de datos visuales
     private ObservableList<Reservacion> listaReservaciones = 
             FXCollections.observableArrayList();
     private Reservacion reservacionSeleccionada = null;
     private ReservacionDAO reservacionesDao = new ReservacionDAO();
+    
+    // Bandera o semáforo lógico para evitar ciclos infinitos en el listener de selección
     private boolean modificandoTabla = false;
 
+    /**
+     * Inicializa los selectores con valores predeterminados de la lógica de negocio,
+     * enlaza las columnas de la tabla y restringe el calendario.
+     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        // Carga de catálogos estáticos
         cbHora.setItems(FXCollections.observableArrayList(
                 "13:00", "14:00", "15:00", "16:00", 
                 "17:00", "18:00", "19:00", "20:00"
@@ -69,6 +79,7 @@ public class ReservacionController implements Initializable {
                 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
         ));
 
+        // Mapeo de columnas con atributos del POJO
         colCliente.setCellValueFactory(new PropertyValueFactory<>("nombreCliente"));
         colFecha.setCellValueFactory(new PropertyValueFactory<>("fecha"));
         colHora.setCellValueFactory(new PropertyValueFactory<>("hora"));
@@ -77,6 +88,7 @@ public class ReservacionController implements Initializable {
         colEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
         colID.setCellValueFactory(new PropertyValueFactory<>("folioUnico"));
         
+        // Configuración visual y de restricciones del DatePicker (evita fechas pasadas)
         dpFecha.setEditable(false);
         dpFecha.setDayCellFactory(picker -> new DateCell() {
             @Override
@@ -84,7 +96,7 @@ public class ReservacionController implements Initializable {
                 super.updateItem(date, empty);
                 if (date.isBefore(LocalDate.now())) {
                     setDisable(true);
-                    setStyle("-fx-background-color: #ffcdd2;"); 
+                    setStyle("-fx-background-color: #ffcdd2;"); // Tinte rojo para días inválidos
                 }
             }
         });
@@ -92,6 +104,7 @@ public class ReservacionController implements Initializable {
         configurarBuscadorRealTime();
         cargarDatosTabla();
 
+        // Sincronización del formulario con el registro seleccionado en la tabla
         tablaReservaciones.getSelectionModel().selectedItemProperty()
                 .addListener((obs, oldSel, newSel) -> {
             if (modificandoTabla) return;
@@ -108,13 +121,14 @@ public class ReservacionController implements Initializable {
         });
     }
 
-/**
+    /**
      * Carga las reservaciones de la base de datos disparando previamente
-     * la depuración de tolerancia cronológica para limpiar retrasos.
+     * la depuración de tolerancia cronológica para limpiar retrasos (No Shows).
      */
     private void cargarDatosTabla() {
-        modificandoTabla = true;
+        modificandoTabla = true; // Bloquea el listener para evitar errores de actualización
         try {
+            // Lógica de negocio: Invalida reservas que superaron el tiempo de espera
             reservacionesDao.depurarReservacionesVencidas();
             
             List<Reservacion> deBD = 
@@ -128,9 +142,14 @@ public class ReservacionController implements Initializable {
         }
     }
 
+    /**
+     * Implementa un buscador reactivo que filtra la tabla dinámicamente
+     * conforme el usuario teclea (por nombre, folio o mesa).
+     */
     private void configurarBuscadorRealTime() {
         FilteredList<Reservacion> filteredData = 
                 new FilteredList<>(listaReservaciones, p -> true);
+        
         txtBuscador.textProperty().addListener((obs, oldVal, newVal) -> {
             filteredData.setPredicate(reserva -> {
                 if (newVal == null || newVal.isEmpty()) return true;
@@ -143,6 +162,9 @@ public class ReservacionController implements Initializable {
         tablaReservaciones.setItems(filteredData);
     }
 
+    /**
+     * Inserta una nueva reservación manualmente desde el módulo administrativo.
+     */
     @FXML
     private void registrarReserva(ActionEvent event) {
         if (txtCliente.getText().isEmpty() || dpFecha.getValue() == null 
@@ -151,6 +173,7 @@ public class ReservacionController implements Initializable {
             return;
         }
 
+        // Generador de folio alfanumérico único
         String folio = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         java.time.LocalTime horaFormateada = java.time.LocalTime.parse(cbHora.getValue());
         
@@ -172,14 +195,20 @@ public class ReservacionController implements Initializable {
         }
     }
 
+    /**
+     * Bloque placeholder para la lógica de modificación secuencial.
+     */
     @FXML
     private void modificarSeleccion(ActionEvent event) {
         if (reservacionSeleccionada == null) return;
-        // Lógica de modificación secuencial...
+        // Lógica de modificación secuencial... (Pendiente de implementación en DAO)
         cargarDatosTabla();
         limpiarFormulario();
     }
 
+    /**
+     * Efectúa una baja lógica del registro seleccionado.
+     */
     @FXML
     private void cancelarReserva(ActionEvent event) {
         if (reservacionSeleccionada == null) return;
@@ -195,6 +224,10 @@ public class ReservacionController implements Initializable {
         }
     }
 
+    /**
+     * Enrutador de retroceso. Devuelve al usuario a su panel correspondiente
+     * dependiendo de si existe una sesión de staff activa.
+     */
     @FXML
     private void handleRegresar(ActionEvent event) {
         try {
@@ -211,6 +244,9 @@ public class ReservacionController implements Initializable {
 
     @FXML void volverDashboard(ActionEvent event) { handleRegresar(event); }
 
+    /**
+     * Restablece el formulario a sus valores por defecto.
+     */
     private void limpiarFormulario() {
         reservacionSeleccionada = null;
         txtCliente.clear();

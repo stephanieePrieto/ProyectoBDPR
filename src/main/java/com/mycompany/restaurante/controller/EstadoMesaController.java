@@ -24,8 +24,8 @@ import com.mycompany.restaurante.modelo.pojo.Mesa;
 
 /**
  * Controlador de UI para el monitoreo y liberación del plano de mesas.
- * Sostiene la lógica del TableView conectada síncronamente con MesaDAO.
- * * @author Stephanie Hernandez
+ * Sostiene la lógica del TableView conectada síncronamente con MesaDAO, 
+ * implementando celdas con renderizado condicional por colores.
  */
 public class EstadoMesaController implements Initializable {
 
@@ -42,12 +42,17 @@ public class EstadoMesaController implements Initializable {
     private final ObservableList<Mesa> listaObservable =
             FXCollections.observableArrayList();
 
+    /**
+     * Inicializa la tabla, aplica las reglas visuales (CellFactory) y 
+     * activa el bloqueador automático de botones de acción.
+     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         configurarTabla();
         refrescarTabla();
 
-        // Listener reactivo para habilitar o deshabilitar el botón de liberación
+        // Listener reactivo: Controla el botón de liberar mesa.
+        // Si el estado de la mesa ya es "Libre", el botón se deshabilita para evitar peticiones innecesarias.
         tvMesas.getSelectionModel().selectedItemProperty()
                 .addListener((obs, viejaSeleccion, nuevaSeleccion) -> {
             if (nuevaSeleccion != null) {
@@ -58,6 +63,9 @@ public class EstadoMesaController implements Initializable {
         });
     }
 
+    /**
+     * Configura el enlace de datos y la personalización estética de las celdas en el TableView.
+     */
     private void configurarTabla() {
         // Vincular columnas obligatorias con las propiedades de la entidad Mesa
         if (colNumero != null) {
@@ -66,7 +74,8 @@ public class EstadoMesaController implements Initializable {
         if (colEstado != null) {
             colEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
             
-            // Renderizador cosmético para pintar las celdas según el estado
+            // Renderizador cosmético (CellFactory): Evalúa el texto que llega de la BD 
+            // y altera las propiedades CSS del nodo visual dinámicamente.
             colEstado.setCellFactory(column -> new TableCell<Mesa, String>() {
                 @Override
                 protected void updateItem(String item, boolean empty) {
@@ -78,19 +87,20 @@ public class EstadoMesaController implements Initializable {
                         setText(item);
                         setAlignment(javafx.geometry.Pos.CENTER);
 
+                        // Lógica semafórica de colores
                         if (item.equalsIgnoreCase("Ocupada")) {
                             setStyle("-fx-background-color: #C82333; "
                                     + "-fx-text-fill: white; "
-                                    + "-fx-font-weight: bold;");
+                                    + "-fx-font-weight: bold;"); // Rojo
                         } else if (item.equalsIgnoreCase("Libre") 
                                 || item.equalsIgnoreCase("Disponible")) {
                             setStyle("-fx-background-color: #218838; "
                                     + "-fx-text-fill: white; "
-                                    + "-fx-font-weight: bold;");
+                                    + "-fx-font-weight: bold;"); // Verde
                         } else if (item.equalsIgnoreCase("Sucia")) {
                             setStyle("-fx-background-color: #D5C295; "
                                     + "-fx-text-fill: black; "
-                                    + "-fx-font-weight: bold;");
+                                    + "-fx-font-weight: bold;"); // Amarillo/Khaki
                         } else {
                             setStyle("");
                         }
@@ -106,12 +116,18 @@ public class EstadoMesaController implements Initializable {
         }
     }
 
+    /**
+     * Se comunica con la BD para obtener el estado fresco de las mesas y empujarlo a la interfaz.
+     */
     private void refrescarTabla() {
         listaObservable.clear();
         listaObservable.addAll(mesaDAO.listarMesas());
         tvMesas.setItems(listaObservable);
     }
 
+    /**
+     * Dispara la lógica de negocio para liberar físicamente una mesa (Update en BD).
+     */
     @FXML
     private void btnLiberarMesaAction(ActionEvent event) {
         Mesa mesaSeleccionada = tvMesas.getSelectionModel().getSelectedItem();
@@ -123,6 +139,9 @@ public class EstadoMesaController implements Initializable {
         }
     }
 
+    /**
+     * Vuelve al inicio preservando la navegación y la sesión de la App.
+     */
     @FXML
     private void volverDashboard(ActionEvent event) {
         try {

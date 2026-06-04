@@ -20,7 +20,6 @@ import javafx.stage.Stage;
  * Controlador del Panel Principal (Dashboard).
  * Gestiona el control de acceso basado en roles (RBAC), administrando la 
  * visibilidad de los componentes y el enrutamiento seguro de las pantallas.
- * * @author Stephanie Hernandez
  */
 public class DashboardController {
 
@@ -43,13 +42,14 @@ public class DashboardController {
     @FXML private Button btnFacturacion;
     @FXML private Button btnAsistencia;
     @FXML private Button mbGestionOrdenes;
-    @FXML private Button btnReportePicos; // Variable inyectada correctamente
+    @FXML private Button btnReportePicos; 
     @FXML private MenuButton mbControl;
     @FXML private MenuItem miReporteVentas;
     @FXML private MenuItem miReporteAlmacen;
 
     /**
-     * Inicializa el estado del controlador y configura los permisos de seguridad.
+     * Inicializa el estado del controlador y configura los permisos de seguridad
+     * basándose en la sesión global (App.usuarioLogueado).
      */
     @FXML
     public void initialize() {
@@ -59,7 +59,7 @@ public class DashboardController {
     }
 
     /**
-     * Configura contextualmente la sesión actual vinculada a un usuario.
+     * Configura contextualmente la sesión actual vinculada a un usuario específico.
      * @param usuario Instancia del objeto POJO con las credenciales activas.
      */
     public void configurarUsuario(Usuario usuario) {
@@ -67,11 +67,13 @@ public class DashboardController {
     }
 
     /**
-     * Administra el ocultamiento y despliegue de módulos según el rol (RBAC).
-     * @param rol Nombre del rol jerárquico.
+     * Motor principal del Control de Acceso (RBAC).
+     * Oculta todas las secciones por defecto y luego habilita únicamente las que
+     * el rol del empleado tiene permitido ver.
+     * @param rol Nombre del rol jerárquico (Gerente, Recepcionista, Cajero, Mesero).
      */
     private void configurarPermisos(String rol) {
-        // Añadimos btnReportePicos a la lista global de purga inicial
+        // 1. Purga global: Ocultar todo por seguridad
         Node[] todos = {
             lblSeccionGerente, lblSeccionRecepcionista, 
             lblSeccionCajero, lblSeccionMesero,
@@ -88,7 +90,7 @@ public class DashboardController {
             }
         }
 
-        // --- ASIGNACIÓN DE PRIVILEGIOS POR ROL OPERATIVO ---
+        // 2. Asignación de Privilegios: Encendido selectivo según el rol
         if ("Gerente".equals(rol)) {
             activar(lblSeccionGerente); 
             activar(btnAltaMenu); 
@@ -117,6 +119,9 @@ public class DashboardController {
         }
     }
 
+    /**
+     * Utilidad para hacer visible y administrable un nodo de JavaFX en el layout.
+     */
     private void activar(Node n) {
         if (n != null) {
             n.setVisible(true);
@@ -124,6 +129,9 @@ public class DashboardController {
         }
     }
 
+    /**
+     * Orquestador de enrutamiento genérico. Carga un archivo FXML y hace la transición de escenas.
+     */
     private void cambiarPantalla(ActionEvent event, String fxml, String titulo) 
             throws IOException {
         FXMLLoader loader = App.getFXMLLoader(fxml);
@@ -143,7 +151,7 @@ public class DashboardController {
         stage.show();
     }
 
-    // --- MÉTODOS DE NAVEGACIÓN ---
+    // --- MÉTODOS DE NAVEGACIÓN (Delegados al método cambiarPantalla) ---
 
     @FXML private void abrirAsistencia(ActionEvent event) {
         try { cambiarPantalla(event, "RegistrarAsistenciaEmpleados", "Registro de Asistencia"); } catch (IOException ex) { ex.printStackTrace(); }
@@ -201,6 +209,9 @@ public class DashboardController {
         try { cambiarPantalla(event, "ListaDeEspera", "Lista de Espera"); } catch (IOException ex) { ex.printStackTrace(); }
     }
 
+    /**
+     * Destruye la sesión activa y devuelve al usuario a la pantalla de Login.
+     */
     @FXML private void cerrarSesion(ActionEvent event) {
         try {
             App.usuarioLogueado = null; 

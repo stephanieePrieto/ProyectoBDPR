@@ -29,10 +29,14 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 /**
- * Controlador de Registro de Platillos migrado a Oracle.
+ * Controlador de Registro de Platillos y Arquitectura del Menú.
+ * Migrado a Oracle Cloud. Permite la administración integral de los ítems de venta,
+ * gestionando metadatos, carga de archivos físicos (imágenes) y conexiones lógicas 
+ * con el inventario de materia prima (Recetas).
  */
 public class RegistroPlatilloController {
 
+    // --- Componentes de UI ---
     @FXML private TextField txtNombre;
     @FXML private TextArea txtDescripcion;
     @FXML private TextField txtPrecio;
@@ -44,11 +48,16 @@ public class RegistroPlatilloController {
     @FXML private Label lblNombreImagen;
     @FXML private ImageView imgVistaPrevia;
 
+    // --- Variables de I/O y Estado ---
     private File archivoImagenSeleccionado;
     private String nombreImagenFinal = "default.png";
     private ObservableList<Platillo> listaPlatillos;
     private Platillo platilloSeleccionado;
 
+    /**
+     * Prepara el entorno gráfico, carga las categorías y extrae el catálogo de 
+     * almacén desde Oracle para permitir la vinculación de ingredientes.
+     */
     @FXML
     public void initialize() {
         cmbCategoria.getItems().addAll("Pizzas", "Bebidas", "Pasteles", "Extras", "Especiales");
@@ -60,7 +69,7 @@ public class RegistroPlatilloController {
         tblPlatillos.setItems(listaPlatillos);
         cargarTabla();
 
-        // Listener de selección
+        // Listener reactivo para carga de datos preexistentes
         tblPlatillos.getSelectionModel().selectedItemProperty().addListener((obs, old, nvo) -> {
             if (nvo != null) {
                 platilloSeleccionado = nvo;
@@ -71,6 +80,10 @@ public class RegistroPlatilloController {
         });
     }
 
+    /**
+     * Consulta a Oracle Cloud para obtener la materia prima existente y llenar
+     * el ComboBox, permitiendo asignar un insumo clave (restricción de inventario) al platillo.
+     */
     private void cargarIngredientesAlmacen() {
         cmbIngrediente.getItems().clear();
         cmbIngrediente.getItems().add("0 - Ninguno (Venta Libre)");
@@ -84,18 +97,29 @@ public class RegistroPlatilloController {
         } catch (SQLException e) { e.printStackTrace(); }
     }
 
+    /**
+     * Abre el explorador de archivos nativo del SO para cargar fotografías del platillo.
+     * Genera una previsualización temporal en el ImageView.
+     */
     @FXML
     void clicSeleccionarImagen(ActionEvent event) {
         FileChooser fc = new FileChooser();
         fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Imágenes", "*.png", "*.jpg"));
         archivoImagenSeleccionado = fc.showOpenDialog(null);
+        
         if (archivoImagenSeleccionado != null) {
             nombreImagenFinal = archivoImagenSeleccionado.getName();
             lblNombreImagen.setText(nombreImagenFinal);
+            // Renderiza la imagen desde el Path absoluto local
             imgVistaPrevia.setImage(new Image(archivoImagenSeleccionado.toURI().toString()));
         }
     }
 
+    /**
+     * Orquesta el guardado del platillo. Si se eligió una nueva imagen, 
+     * copia físicamente el archivo al directorio de recursos del proyecto mediante NIO.
+     * Posteriormente, ejecuta el Insert/Update en Oracle Cloud a través del DAO.
+     */
     @FXML
     void clicGuardar(ActionEvent event) {
         String nombre = txtNombre.getText();
@@ -109,10 +133,9 @@ public class RegistroPlatilloController {
 
         try {
             double precio = Double.parseDouble(precioTexto);
-            // Lógica de categoría
-            int idCat = 1; 
+            int idCat = 1; // Simplificación demostrativa de mapeo de categoría
             
-            // Procesar imagen
+            // I/O: Copia física del archivo a la carpeta de recursos de la aplicación
             if (archivoImagenSeleccionado != null) {
                 Path destino = Paths.get("src/main/resources/img/" + nombreImagenFinal);
                 Files.copy(archivoImagenSeleccionado.toPath(), destino, StandardCopyOption.REPLACE_EXISTING);
@@ -122,8 +145,9 @@ public class RegistroPlatilloController {
             
             try (Connection con = OracleConnect.getConexion()) {
                 PlatilloDAO dao = new PlatilloDAO(con);
-                if (platilloSeleccionado == null) dao.registrarPlatillo(p);
-                else {
+                if (platilloSeleccionado == null) {
+                    dao.registrarPlatillo(p);
+                } else {
                     p.setIdPlatillo(platilloSeleccionado.getIdPlatillo());
                     dao.actualizarPlatillo(p);
                 }
@@ -136,6 +160,9 @@ public class RegistroPlatilloController {
         }
     }
 
+    /**
+     * Extrae el catálogo vigente de platillos desde Oracle para refrescar el TableView.
+     */
     private void cargarTabla() {
         listaPlatillos.clear();
         try (Connection con = OracleConnect.getConexion()) {
@@ -147,6 +174,9 @@ public class RegistroPlatilloController {
     @FXML
     void clicLimpiar(ActionEvent event) { limpiarCampos(); }
 
+    /**
+     * Detiene el flujo de operaciones y devuelve la navegación al Dashboard administrativo.
+     */
     @FXML
     void clicCancelar(ActionEvent event) {
         try {
@@ -156,6 +186,10 @@ public class RegistroPlatilloController {
         } catch (Exception e) { e.printStackTrace(); }
     }
     
+    /**
+     * Aplica una baja lógica (Soft Delete) al platillo seleccionado para no romper 
+     * la integridad referencial de los tickets de ventas pasadas en la BD.
+     */
     @FXML
     void clicDarDeBaja(ActionEvent event) {
         if (platilloSeleccionado == null) {
@@ -165,7 +199,7 @@ public class RegistroPlatilloController {
 
         try (Connection conexion = OracleConnect.getConexion()) {
             PlatilloDAO dao = new PlatilloDAO(conexion);
-            // Asegúrate de que este método exista en tu PlatilloDAO
+            // Ejecuta el UPDATE que cambia el estado a 'Inactivo'
             if (dao.darDeBajaPlatillo(platilloSeleccionado.getIdPlatillo())) {
                 mostrarAlerta("Éxito", "El platillo ha sido dado de baja.", Alert.AlertType.INFORMATION);
                 limpiarCampos();
@@ -188,6 +222,4 @@ public class RegistroPlatilloController {
     private void mostrarAlerta(String titulo, String msg, Alert.AlertType tipo) {
         Alert a = new Alert(tipo); a.setTitle(titulo); a.setContentText(msg); a.showAndWait();
     }
-    
-    
 }
