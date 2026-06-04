@@ -3,6 +3,7 @@ package com.mycompany.restaurante.controller;
 import com.mycompany.restaurante.modelo.sql.OracleConnect; // Conexión a Oracle Cloud
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -47,25 +48,45 @@ public class TarjetaPedidoController {
      * Modifica el estado de la orden en Oracle Cloud y remueve el componente visual.
      * @param event Evento de acción disparado por el botón "Listo".
      */
-    @FXML
-    void clicDespachar(ActionEvent event) {
-        // Usamos OracleConnect en lugar de MySQLConnect
-        String sql = "UPDATE pedidos SET estado = 'Listo' WHERE idPedido = ?";
+
+@FXML
+void clicDespachar(ActionEvent event) {
+    // 1. SELECT: Obtenemos el objeto 'info' completo.
+    // Usamos el alias 'p' para la tabla.
+    String sqlSelect = "SELECT p.info FROM pedidos p WHERE p.idPedido = ?";
+    String sqlUpdate = "UPDATE pedidos p SET p.info = auditoria_pedido_typ(?, ?) WHERE p.idPedido = ?";
+    
+    try (Connection con = OracleConnect.getConexion()) {
+        java.sql.Timestamp fechaOriginal = null;
         
-        try (Connection con = OracleConnect.getConexion();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            
-            ps.setInt(1, idPedido);
-            ps.executeUpdate();
-            
-            // Actualiza la vista del Chef automáticamente
-            if (pantallaPadre != null) {
-                pantallaPadre.cargarComandasActivas();
+        // Obtenemos el objeto info
+        try (PreparedStatement psSel = con.prepareStatement(sqlSelect)) {
+            psSel.setInt(1, idPedido);
+            try (ResultSet rs = psSel.executeQuery()) {
+                if (rs.next()) {
+                    // Accedemos al objeto como una estructura (STRUCT)
+                    java.sql.Struct struct = (java.sql.Struct) rs.getObject(1); // <--- Índice 1
+                    Object[] attrs = struct.getAttributes();
+                    fechaOriginal = (java.sql.Timestamp) attrs[0]; // <--- Índice 0 (fecha)
+                }
             }
-            
-        } catch (SQLException e) {
-            System.err.println("❌ Error al despachar pedido en Oracle: " + e.getMessage());
-            e.printStackTrace();
         }
+        
+        // Actualizamos usando los atributos extraídos
+        if (fechaOriginal != null) {
+            try (PreparedStatement psUp = con.prepareStatement(sqlUpdate)) {
+                psUp.setTimestamp(1, fechaOriginal);
+                psUp.setString(2, "Listo");
+                psUp.setInt(3, idPedido);
+                psUp.executeUpdate();
+            }
+        }
+        
+        if (pantallaPadre != null) pantallaPadre.cargarComandasActivas();
+        
+    } catch (SQLException e) {
+        System.err.println("❌ Error al despachar pedido: " + e.getMessage());
+        e.printStackTrace();
     }
+}
 }
